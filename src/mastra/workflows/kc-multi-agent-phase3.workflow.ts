@@ -8,6 +8,7 @@ import { createAssessmentAgent, createAssessmentPrompt } from '../agents/assessm
 import { createBloomAgent, createBloomPrompt } from '../agents/bloom-agent';
 import { createMasterConsolidatorAgent, createMasterConsolidationPrompt } from '../agents/master-consolidator.agent';
 import { KCArraySchema } from '../schemas/kc';
+import { retryAgentGenerate } from '../utils/retry';
 
 // Import Mastra evaluation metrics
 import { FaithfulnessMetric } from '@mastra/evals/llm';
@@ -19,7 +20,7 @@ import { AnswerRelevancyMetric } from '@mastra/evals/llm';
 const inputSchema = z.object({
   dir: z.string().default('src/mastra/Input'),
   outDir: z.string().default('out'),
-  model: z.string().default('google:gemini-2.5-pro'),
+  model: z.string().default('gemini-1.5-pro'),
   courseTitle: z.string().default('Course Knowledge Components'),
 });
 
@@ -136,9 +137,11 @@ const atomicityExtractionStep = createStep({
     const atomicityAgent = createAtomicityAgent(model);
     const atomicityPrompt = createAtomicityPrompt(combinedContent, anchorList, courseTitle);
 
-    const atomicityResult = await atomicityAgent.generate(
-      [{ role: 'user', content: atomicityPrompt }],
-      { output: KCArraySchema }
+    const atomicityResult = await retryAgentGenerate(
+      () => atomicityAgent.generate(
+        [{ role: 'user', content: atomicityPrompt }],
+        { output: KCArraySchema }
+      )
     );
 
     return {
@@ -175,9 +178,11 @@ const anchorsExtractionStep = createStep({
     const anchorsAgent = createAnchorsAgent(model);
     const anchorsPrompt = createAnchorsPrompt(combinedContent, anchorList, courseTitle);
 
-    const anchorsResult = await anchorsAgent.generate(
-      [{ role: 'user', content: anchorsPrompt }],
-      { output: KCArraySchema }
+    const anchorsResult = await retryAgentGenerate(
+      () => anchorsAgent.generate(
+        [{ role: 'user', content: anchorsPrompt }],
+        { output: KCArraySchema }
+      )
     );
 
     return {
@@ -214,9 +219,11 @@ const assessmentExtractionStep = createStep({
     const assessmentAgent = createAssessmentAgent(model);
     const assessmentPrompt = createAssessmentPrompt(combinedContent, anchorList, courseTitle);
 
-    const assessmentResult = await assessmentAgent.generate(
-      [{ role: 'user', content: assessmentPrompt }],
-      { output: KCArraySchema }
+    const assessmentResult = await retryAgentGenerate(
+      () => assessmentAgent.generate(
+        [{ role: 'user', content: assessmentPrompt }],
+        { output: KCArraySchema }
+      )
     );
 
     return {
@@ -253,9 +260,11 @@ const bloomExtractionStep = createStep({
     const bloomAgent = createBloomAgent(model);
     const bloomPrompt = createBloomPrompt(combinedContent, anchorList, courseTitle);
 
-    const bloomResult = await bloomAgent.generate(
-      [{ role: 'user', content: bloomPrompt }],
-      { output: KCArraySchema }
+    const bloomResult = await retryAgentGenerate(
+      () => bloomAgent.generate(
+        [{ role: 'user', content: bloomPrompt }],
+        { output: KCArraySchema }
+      )
     );
 
     return {
@@ -347,9 +356,11 @@ const masterConsolidationStep = createStep({
     );
 
     // Run master consolidation
-    const consolidationResult = await masterAgent.generate(
-      [{ role: 'user', content: consolidationPrompt }],
-      { output: KCArraySchema }
+    const consolidationResult = await retryAgentGenerate(
+      () => masterAgent.generate(
+        [{ role: 'user', content: consolidationPrompt }],
+        { output: KCArraySchema }
+      )
     );
 
     const finalKCs = consolidationResult.object || [];

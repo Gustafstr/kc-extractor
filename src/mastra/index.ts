@@ -13,11 +13,11 @@ import { createAtomicityAgent } from './agents/atomicity-agent';
 import { createBloomAgent } from './agents/bloom-agent';
 
 // Create specialized agent instances for Phase 3 using Gemini model
-const masterConsolidator = createMasterConsolidatorAgent('google:gemini-2.5-pro');
-const anchorsAgent = createAnchorsAgent('google:gemini-2.5-pro');
-const assessmentAgent = createAssessmentAgent('google:gemini-2.5-pro');
-const atomicityAgent = createAtomicityAgent('google:gemini-2.5-pro');
-const bloomAgent = createBloomAgent('google:gemini-2.5-pro');
+const masterConsolidator = createMasterConsolidatorAgent('gemini-1.5-pro');
+const anchorsAgent = createAnchorsAgent('gemini-1.5-pro');
+const assessmentAgent = createAssessmentAgent('gemini-1.5-pro');
+const atomicityAgent = createAtomicityAgent('gemini-1.5-pro');
+const bloomAgent = createBloomAgent('gemini-1.5-pro');
 
 export const mastra = new Mastra({
   workflows: { 

@@ -69,8 +69,8 @@ FOCUS AREAS:
 - Use action verbs that indicate measurable performance
 - Consider different assessment formats (MC, short answer, practical)
 
-Extract all highly testable KCs with concrete assessment examples. Generate as many assessable KCs as you can identify, ensuring each has a realistic test question.`,
-    model: google(model.replace('google:', '')),
+Extract all highly testable KCs with concrete assessment examples. Generate at maximum 35 KCs, ensuring each has a realistic test question.`,
+    model: google(model),
   });
 }
 
@@ -98,8 +98,6 @@ Extract all testable Knowledge Components that meet the criteria. Each KC must:
 - Include a specific, realistic example assessment (≤120 chars)
 - Use actionable verbs that indicate measurable performance
 - Be student-friendly and clearly worded
-
-Generate as many assessable KCs as you can identify, ensuring comprehensive coverage of testable content.
 
 Return a JSON array following this structure:
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[

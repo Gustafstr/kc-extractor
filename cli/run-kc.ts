@@ -136,12 +136,21 @@ async function main() {
       }
       
       // Show Excel export information if available
-      if (result.summary?.excelExport) {
+      if (result.summary?.kcResultsExport) {
         console.log('');
-        console.log('📊 Excel Export:');
-        console.log(`  📄 File: ${result.summary.excelExport.filePath}`);
-        console.log(`  📋 Sheets: ${result.summary.excelExport.sheetsCreated.join(', ')}`);
-        console.log(`  📊 KCs Exported: ${result.summary.excelExport.totalKCs}`);
+        console.log('📊 KC Results Excel:');
+        console.log(`  📄 File: ${result.summary.kcResultsExport.filePath}`);
+        console.log(`  📋 Sheets: ${result.summary.kcResultsExport.sheetsCreated.join(', ')}`);
+        console.log(`  📊 KCs Exported: ${result.summary.kcResultsExport.totalKCs}`);
+      }
+      
+      if (result.summary.evaluationReport) {
+        console.log('');
+        console.log('📈 Evaluation Report Excel:');
+        console.log(`  📄 File: ${result.summary.evaluationReport.filePath}`);
+        console.log(`  📋 Sheets: ${result.summary.evaluationReport.sheetsCreated.join(', ')}`);
+        console.log(`  🎯 Grade: ${result.summary.evaluationReport.overallGrade}`);
+        console.log(`  📊 Score: ${result.summary.evaluationReport.overallScore.toFixed(3)}`);
       }
       
     } else if (workflowName === 'phase3') {

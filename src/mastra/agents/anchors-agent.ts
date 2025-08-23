@@ -60,8 +60,8 @@ FOCUS AREAS:
 - Prefer fewer, well-supported KCs over many weakly-supported ones
 - Validate all anchor IDs against the provided list
 
-Extract all evidence-based KCs that have strong anchor support. Generate as many KCs as you can find with solid evidence, prioritizing quality of evidence over quantity.`,
-    model: google(model.replace('google:', '')),
+Extract all evidence-based KCs that have strong anchor support. Generate at maximum 35 KCs, prioritizing quality of evidence over quantity.`,
+    model: google(model),
   });
 }
 
@@ -89,8 +89,6 @@ Extract all evidence-based Knowledge Components with strong anchor support. Each
 - Be traceable to explicit content in the cited anchors
 - Use only anchor IDs from the provided list above
 - Have clear, direct evidence (no inference or speculation)
-
-Generate as many well-supported KCs as you can identify, prioritizing evidence quality over quantity.
 
 Return a JSON array following this structure:
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[

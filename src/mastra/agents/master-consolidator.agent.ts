@@ -72,7 +72,7 @@ OUTPUT REQUIREMENTS:
 - All KCs must be atomic, evidence-based, testable, and properly classified
 - Balanced coverage of course content
 - Quality over quantity - prefer fewer excellent KCs than many mediocre ones`,
-    model: google(model.replace('google:', '')),
+    model: google(model),
   });
 }
 

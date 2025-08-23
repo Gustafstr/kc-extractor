@@ -65,6 +65,244 @@ CourseFiles → CombinedContent → AgentOutputs → ConsolidatedKCs → Evaluat
 
 Each transformation is validated against strict schemas, preventing data corruption and enabling reliable error handling.
 
+## 🧠 **Chapter 3: Design and Development of the LLM‑based KC Extractor**
+
+This chapter explains what we built, how it works end‑to‑end, and why each design choice supports reliable Knowledge Component (KC) extraction suitable for expert validation. We intentionally avoid heavy jargon; when technical terms appear, we define them in context.
+
+### **3.0 Graph‑based workflows (foundations)**
+
+We model the pipeline as a graph‑based, acyclic workflow of typed steps, where each node is a `createStep` and edges enforce data contracts via Zod schemas. This design enables clear parallelism, robust error handling, and reproducible runs.
+
+- **Parallel execution**: Independent steps run concurrently with `.parallel()`; downstream steps wait for all parents to finish.
+- **Typed edges**: Each step’s `outputSchema` must match the next step’s `inputSchema` (or be mapped), preventing schema drift.
+- **Observability**: Workflows expose step‑level inputs/outputs, timing, and status for traceability.
+
+References (Mastra Docs): `workflows/overview.mdx`, `workflows/control-flow.mdx`, `reference/workflows/parallel.mdx`, `workflows/using-with-agents-and-tools.mdx`.
+
+### **3.1 System Architecture Overview**
+
+At a high level, the system converts course PDFs into clean text, prepares a single combined course context, runs four specialized AI agents in parallel to propose KC candidates, consolidates them into a single coherent list, evaluates quality with multiple metrics, and finally exports artifacts for instructors and for research analysis.
+
+Key modules (data then flows left → right):
+
+- **PDF Conversion**: Converts source `PDF` files to `Markdown` for consistent downstream processing.
+- **Course Loader**: Reads all converted `.md` files, extracts metadata, and builds a single `combinedContent` string plus an `anchorList` for traceability.
+- **Parallel KC Agents**: Four focused agents (Atomicity, Anchors, Assessment, Bloom) generate KC candidates from the same course context.
+- **Master Consolidator**: Merges, de‑duplicates, normalizes, and assigns IDs to produce the final KC set.
+- **Quality Evaluation**: Computes faithfulness, hallucination risk, completeness, and answer relevancy to summarize overall quality.
+- **Exports**: Writes an instructor‑friendly KC Excel and an evaluation report for research.
+
+These modules are orchestrated with a typed workflow so data at each step is validated. We use Zod schemas (a lightweight validation library) to guarantee each step receives the shape of data it expects. This limits silent failures and makes results reproducible.
+
+For the full step chain with IDs and descriptions, see Appendix A (Workflow Code Locations).
+
+### **3.2 LLM‑driven KC Identification from Course Materials**
+
+We use a multi‑agent pattern where each agent “specializes” in one quality dimension of a Knowledge Component:
+
+- **Atomicity Agent**: Ensures each KC expresses one clear idea (no compound concepts).
+- **Anchors Agent**: Requires every KC to be backed by 1–2 strong references (anchors) from the course text.
+- **Assessment Agent**: Emphasizes testability and includes a concise example assessment.
+- **Bloom Agent**: Assigns each KC a Bloom taxonomy level aligned with its verb and cognitive demand.
+
+All four agents read the same `combinedContent` and `anchorList`, then propose candidates in parallel. Parallelism shortens runtime and diversifies perspectives, improving coverage while keeping single‑pass complexity tractable. Outputs are typed with a shared KC schema so later steps can merge consistently.
+
+**Running example used in this chapter**
+
+We reuse one example KC throughout:
+
+- kc_id: KC-01-003
+- label: “Differentiate diversity, equality, inclusion”
+- definition: “Explain distinctions between workplace diversity, equality, and inclusion, and how they interact in HR practices.”
+- anchors: A-024, A-057
+- bloom: Understand
+- example_assessment: “Describe the difference between diversity and inclusion with one example.”
+
+### **3.2.3 Agents and prompts**
+
+Atomicity (single concept; action verbs; de‑duplicate):
+
+- One concept per KC (no compound ideas)
+- Use clear, specific action verbs
+- Eliminate duplicates/synonyms; keep the most precise wording
+- Each KC must be testable with 1–3 items
+
+Anchors (evidence‑first):
+
+- Cite 1–2 valid anchors that directly support the KC
+- Evidence must be explicit in the source (no inference/speculation)
+- Every claim traceable to specific text
+
+Assessment (testability and realism):
+
+- Each KC measurable with 1–3 assessment items (≤120 chars)
+- Use student‑friendly, actionable language and verbs
+- Focus on practical assessments instructors can use
+
+Bloom (taxonomy alignment):
+
+- Map each KC to the most accurate Bloom level (Remember → Create)
+- Align verbs with cognitive demand and course level
+
+Master consolidator (merge and standardize):
+
+- Deduplicate overlaps and select the best phrasing
+- Enforce formatting, IDs, and schema compliance
+- Check anchor validity; fill obvious coverage gaps
+
+Implementation locations for these steps are listed in Appendix A.
+
+### **3.2.1 Input Data and Pre‑processing of Course Materials**
+
+Course materials are provided as PDFs. We convert them to Markdown to preserve structure (headings, lists, tables) and to normalize text for analysis. The converter records metadata such as total files and conversion time so we can report end‑to‑end performance.
+
+- If a clean Markdown set already exists, we can skip conversion (`skipConversion = true`).
+- The loader then scans the Markdown directory, combines files, and extracts anchors—small, traceable snippets or IDs that KCs should cite as evidence.
+
+Why data quality matters:
+
+- **Noise affects KCs**: OCR artifacts, headers/footers, and page numbers can leak into labels/definitions. We mitigate by normalizing to Markdown and keeping anchors explicit.
+- **Structure improves alignment**: Preserved headings and lists help the agents identify atomic boundaries and evidence.
+- **Determinism**: Consistent pre‑processing supports reproducible runs and fair evaluation in Chapter 4.
+
+Implementation details for conversion and loading: see Appendix D (PDF→Markdown and Course Loader).
+
+### **3.2.2 LLM Selection and Configuration**
+
+We use Google Gemini models via a standardized agent interface. The model is a parameter (`model`) so experiments can be run consistently. We keep decoding simple and deterministic enough for expert review—consistent inputs should produce consistent KCs. All agent calls are strongly typed: their outputs must match the KC schema, reducing manual cleanup.
+
+Model and parameter configuration: see Appendix A (Workflow Inputs and Parameters).
+
+Why a reasoning‑capable model and full‑context (no RAG) for this study:
+
+- **Single‑course scope fits context**: Our combined course content is within modern context windows, so we avoid retrieval misses and chunk boundary issues.
+- **Anchor fidelity**: Agents must cross‑reference anchors across sections; full‑context reduces false negatives from retrieval.
+- **Granularity and taxonomy**: Reasoning models handle verb‑level distinctions (Bloom) and atomic splits more reliably when they see the full narrative.
+- **Trade‑offs**: Higher token usage; we mitigate via concise prompts, short fields, and early consolidation. RAG is excellent at corpus‑scale, but here full‑context optimizes quality and traceability for a single course.
+
+### **3.2.4 Prompt Engineering**
+
+Prompts are concise and role‑specific, using guardrails to enforce: one concept per KC (Atomicity), mandatory evidence (Anchors), short testable phrasing (Assessment), and appropriate cognitive verbs (Bloom). We keep instructions minimal but explicit to reduce drift and improve repeatability. Examples are embedded sparingly to avoid overfitting to specific phrasing.
+
+Design principles used:
+
+- **Single objective per agent**: Each agent only optimizes one quality dimension.
+- **Strong guardrails**: Explicit constraints on format, length, anchors, and Bloom verbs.
+- **Few‑shot only where needed**: Use 1–2 micro‑examples; avoid long demonstrations.
+- **Deterministic tone**: Prefer clear instructions over creative phrasing to reduce variance.
+- **Terse outputs**: Short labels and definitions improve readability and evaluation.
+
+Full prompt templates (all agents + consolidator): see Appendix B.
+
+We also include negative constraints (what not to do), such as avoiding broad “chapter summaries,” multi‑part concepts, or evidence that is not directly present in the course content.
+
+### **3.3 Consolidation and Normalization**
+
+The master consolidator receives four candidate lists and produces one reconciled KC set. Consolidation performs de‑duplication, enforces formatting, standardizes Bloom levels, and—importantly—retains only well‑anchored, atomic KCs. The step also aggregates simple contribution counts (how many KCs each agent supplied), which we later report.
+
+Consolidation step implementation path: see Appendix A.
+
+### **3.4 Quality Evaluation**
+
+We evaluate quality from four angles to aid expert judgement:
+
+- **Faithfulness**: Do KCs reflect the source content? Higher is better.
+- **Hallucination**: Are there unsupported claims? Lower is better (we invert it in overall scoring).
+- **Completeness**: How well do the KCs cover key ideas in the course?
+- **Answer Relevancy**: Do KCs directly address the extraction query and learning goals?
+
+These metrics run in parallel and are summarized into an overall score and letter grade. Implementation paths and configuration are listed in Appendix C (Evaluation Details).
+
+#### **3.4.1 Evaluation Protocol and Scoring**
+
+- **Inputs**: The evaluator receives (a) the combined course content as context and (b) a compact textual summary of all KCs (label + definition + Bloom + anchors).
+- **Models**: LLM‑based metrics (faithfulness, hallucination, relevancy) use the same Gemini family as extraction for consistency; completeness uses a rule‑based NLP metric (no LLM).
+- **Parallelism**: All four metrics run concurrently to reduce runtime.
+- **Overall score**: Simple average of four normalized metrics, with hallucination inverted (lower is better). Mapped to letter grades (A–F) with a pass threshold at ≥70%.
+- **Artifacts**: Results are exported to Excel for inspection and archived with run metadata (model, timing, counts).
+
+Inputs and formula details are documented in Appendix C. In prose: the overall score is the mean of the four metrics after inverting hallucination (lower is better).
+
+#### **3.4.2 Iterating Based on Evals**
+
+Evaluation is not the end; it is the feedback loop. We iterate when metrics indicate issues:
+
+- **Low faithfulness** → Strengthen anchor requirements; tighten wording around “only from provided content”; add explicit “reject unverifiable claims.”
+- **High hallucination** → Add negative examples; shorten allowed definition length; raise emphasis on evidence linking.
+- **Low completeness** → Expand agent coverage (e.g., add synonyms to prompts) or adjust pre‑processing to include missing sections.
+- **Low relevancy** → Refocus the course query; sharpen agent goals and remove optional tangents.
+
+Iteration loop:
+
+1. Run extraction → 2) Run evals → 3) Inspect Excel + logs → 4) Update prompts or preprocessing → 5) Re‑run. We accept a prompt revision when metrics stabilize across runs and expert feedback (Chapter 4) signals fewer edits during review.
+
+#### **3.4.3 Metric details and references**
+
+- **Faithfulness**: claim‑level verification against course content (Mastra Docs: `reference/evals/faithfulness.mdx`).
+- **Hallucination**: contradiction/unsupported claim ratio (Mastra Docs: `reference/evals/hallucination.mdx`).
+- **Completeness**: linguistic coverage of nouns/verbs/topics/terms (Mastra Docs: `reference/evals/completeness.mdx`).
+- **Answer Relevancy**: query alignment with uncertainty weighting (Mastra Docs: `reference/evals/answer-relevancy.mdx`).
+
+Implementation mirrors Mastra’s guidance on judge‑based and rule‑based metrics; see also workflows for agent/tool integration (Mastra Docs: `workflows/using-with-agents-and-tools.mdx`).
+
+### **3.5 Outputs, Exports, and Traceability**
+
+The system writes two key deliverables:
+
+- **KC Results (Excel)** for instructor review (immediately available after consolidation).
+- **Evaluation Report (Excel)** detailing all metrics, scores, and summary.
+
+All steps log progress with counts and timings. The final summary reports the number of converted PDFs, total KCs, valid KCs (those with anchors), processing time, and overall quality grade.
+
+KC results export and evaluation report locations: see Appendix A and Appendix E (Reproducibility & Running).
+
+### **3.6 Design Rationale, Ethics, and Validity**
+
+- **Why multi‑agent?** Specialization keeps prompts simple and focused, which helps consistency and reduces hidden coupling between concerns (e.g., evidence vs. taxonomy).
+- **Why typed workflows?** Zod schemas catch mismatches early and make runs reproducible for research.
+- **Why parallelism?** Running agents and evaluations concurrently reduces wall‑clock time while maintaining clarity.
+- **Limitations**: Output still depends on input quality (e.g., messy PDFs). LLM evaluations provide structured guidance but do not replace expert judgement. The present study is scoped to one course; generalization is future work.
+
+#### **3.6.1 Ethics & data governance**
+
+- No personally identifiable information (PII) is used; inputs are instructor‑provided course materials.
+- Outputs are designed for instructor review, not automated publication.
+- Anchors enforce traceability to source text, discouraging fabrication.
+- All runs include model/version metadata for accountability.
+
+#### **3.6.2 Threats to validity and mitigations**
+
+- **Internal validity**: Prompt sensitivity or PDF conversion artifacts may bias KCs → mitigated via concise guardrails, negative constraints, and Markdown normalization.
+- **Construct validity**: Metrics may not fully capture pedagogical quality → mitigated with expert review in Chapter 4 and anchor checks.
+- **External validity**: Results from one course/domain may not generalize → mitigated by documenting assumptions and exposing configuration knobs.
+- **Reliability**: LLM variance across runs → mitigated via deterministic decoding and schema constraints.
+
+### **3.7 Reproducibility and Configuration**
+
+The workflow exposes clear knobs for reproducibility and experiment control:
+
+- `pdfDir`, `markdownDir`, `outDir`, `courseTitle`, `model`, `skipConversion`.
+- Environment variables for API access.
+- Deterministic prompts and typed outputs to facilitate expert comparison and inter‑rater analysis in Chapter 4.
+
+### **3.8 Why Mastra for this thesis?**
+
+- **Typed, visual workflows**: `createWorkflow` + `createStep` with Zod schemas enforce data contracts and enable readable graph‑based workflows (Mastra Docs: `workflows/overview.mdx`, `reference/workflows/workflow.mdx`, `reference/workflows/step.mdx`).
+- **First‑class parallelism**: `.parallel()` simplifies concurrent agent/eval runs (Mastra Docs: `reference/workflows/parallel.mdx`, `workflows/control-flow.mdx`).
+- **Agents and tools interop**: Agents plug into steps, tools are reusable for I/O and exports (Mastra Docs: `agents/overview.mdx`, `workflows/using-with-agents-and-tools.mdx`, `reference/agents/agent.mdx`).
+- **Evaluation ecosystem**: Built‑in metrics for faithfulness, hallucination, completeness, and relevancy (Mastra Docs: `reference/evals/`).
+
+These features match the thesis needs: reproducibility (typed schemas), parallel specialization (multi‑agent), quality assessment (evals), and traceability (step logs, exports).
+
+### **3.9 Glossary (quick reference)**
+
+- **Graph‑based workflow**: A directed workflow without cycles; enables safe parallelism and clear provenance.
+- **Anchor**: A short, traceable snippet/ID from course text used as evidence for a KC.
+- **Atomicity**: The property that a KC expresses one clear, testable concept.
+- **Bloom’s taxonomy**: Educational framework classifying cognitive levels (Remember → Create).
+- **Hallucination**: LLM output that is unsupported or contradicted by source content.
+- **Completeness**: Coverage of key ideas from the course by the produced KCs.
+
 ## 📋 **Detailed Workflow Steps**
 
 ### **Step 1: Course Loading & Preparation**
@@ -156,28 +394,7 @@ Each transformation is validated against strict schemas, preventing data corrupt
 
 ### **Mastra Workflow Structure**
 
-```typescript
-const workflow = createWorkflow({
-  id: 'kc-extraction-multi-agent',
-  inputSchema: z.object({
-    dir: z.string(),
-    outDir: z.string().default('out'),
-  }),
-  outputSchema: z.object({
-    written: z.array(z.string()),
-    evaluation: z.object({...}),
-  })
-})
-  .then(loadCourseStep)           // Step 1
-  .then(prepareAgentsStep)        // Step 2
-  .then(parallelExtractionStep)   // Step 3 - PARALLEL AGENTS
-  .then(mergeCandidatesStep)      // Step 4
-  .then(masterConsolidationStep)  // Step 5
-  .then(validationStep)           // Step 6
-  .then(evaluationStep)           // Step 7 (optional)
-  .then(outputGenerationStep)     // Step 8
-  .commit();
-```
+For a full, commented workflow skeleton, see Appendix A (Workflow Code Locations).
 
 ### **Key Mastra Patterns to Learn**
 
@@ -190,53 +407,7 @@ const workflow = createWorkflow({
 
 ### **Agent Prompt Templates**
 
-#### **Atomicity Agent**
-
-```
-You are an Atomicity Specialist. Extract KCs that are:
-- Single, clear concepts (not compound ideas)
-- Unique phrasing (no duplicates/synonyms)
-- Action-oriented with clear verbs
-- Atomic and assessable
-
-Focus on splitting complex ideas into simple, testable components.
-```
-
-#### **Anchors Agent**
-
-```
-You are an Evidence Specialist. Extract KCs that are:
-- Directly supported by 1-2 strong anchors
-- Grounded in actual course content
-- Traceable to specific text sections
-- Never speculative or inferred
-
-Every KC must cite valid anchor IDs from the provided list.
-```
-
-#### **Assessment Agent**
-
-```
-You are an Assessment Specialist. Extract KCs that are:
-- Easily testable with 1-3 questions
-- Include concrete example assessments (≤120 chars)
-- Measurable learning outcomes
-- Student-friendly phrasing
-
-Focus on what instructors can actually assess.
-```
-
-#### **Bloom Agent**
-
-```
-You are a Taxonomy Specialist. Extract KCs with:
-- Proper Bloom level mapping (Remember → Create)
-- Verb alignment with cognitive levels
-- Appropriate complexity for course level
-- Clear learning progression
-
-Map each KC to the most accurate Bloom taxonomy level.
-```
+See Appendix B for the full prompt templates (Atomicity, Anchors, Assessment, Bloom, and Master Consolidator), with examples and negative constraints.
 
 ## 📊 **Data Schemas**
 
@@ -266,17 +437,7 @@ const KCSchema = z.object({
 
 ### **Evaluation Schema**
 
-```typescript
-const EvaluationSchema = z.object({
-  faithfulness: z.number().min(0).max(1),
-  completeness: z.number().min(0).max(1),
-  hallucination_risk: z.number().min(0).max(1),
-  relevance: z.number().min(0).max(1),
-  total_kcs: z.number(),
-  valid_kcs: z.number(),
-  comments: z.string(),
-});
-```
+See Appendix C for schemas, metric configurations, and the exact overall score computation. Typical outputs are summarized in Chapter 3 and detailed examples are included in the appendix.
 
 ## 🎯 **Success Criteria**
 
@@ -314,7 +475,7 @@ const EvaluationSchema = z.object({
 ```
 src/mastra/
 ├── workflows/
-│   └── kc-multi-agent.workflow.ts     # Main workflow
+│   └── kc-extraction-full-circle.workflow.ts     # Main workflow
 ├── agents/
 │   ├── atomicity-agent.ts             # Atomicity specialist
 │   ├── anchors-agent.ts               # Evidence specialist
@@ -323,8 +484,8 @@ src/mastra/
 │   └── master-consolidator.agent.ts   # Final consolidation
 ├── tools/
 │   ├── course-loader.tool.ts          # File loading & parsing
-│   ├── kc-validator.tool.ts           # Schema validation & auto-fix
-│   ├── kc-evaluator.tool.ts           # Quality evaluation
+│   ├── kc-results-export.tool.ts      # KC Excel export
+│   ├── evaluation-report-export.tool.ts # Evaluation Excel export
 │   └── output-generator.tool.ts       # File writing
 └── schemas/
     ├── kc-enhanced.ts                 # Enhanced KC schema
@@ -343,6 +504,46 @@ By implementing this workflow, you'll master:
 6. **Quality Assurance**: Implementing validation and evaluation patterns
 
 ---
+
+## 📎 **Appendices**
+
+### **Appendix A — Workflow Code Locations and Parameters**
+
+- Main workflow: `src/mastra/workflows/kc-extraction-full-circle.workflow.ts`
+- Key steps: PDF conversion, course loading, 4 parallel agents, master consolidation, 4 parallel evals, exports
+- Inputs and parameters: `pdfDir`, `markdownDir`, `outDir`, `model`, `courseTitle`, `skipConversion`, API keys
+
+### **Appendix B — Full Prompt Templates**
+
+- Agents: Atomicity, Anchors, Assessment, Bloom
+- Master Consolidator prompt
+- Negative constraints and any few‑shot examples
+
+### **Appendix C — Evaluation Details**
+
+- Metric schemas and configurations: Faithfulness, Hallucination, Completeness, Answer Relevancy
+- Overall score formula and grade mapping
+- Example evaluation outputs (JSON excerpts)
+
+### **Appendix D — Data Conversion and Loading**
+
+- PDF→Markdown process and settings (Datalab/Marker integration)
+- Course loader behavior and anchor extraction
+- Skipping conversion when markdown already exists
+
+### **Appendix E — Reproducibility & Running**
+
+- Required environment variables and API keys
+- CLI commands and usage patterns
+- Output artifacts (Excel files) and run logs
+
+### **Appendix F — Figures to include (for thesis writer)**
+
+- Figure 1: Graph‑based workflow overview (PDF conversion → 4 parallel agents → master consolidation → 4 parallel evals → exports)
+- Figure 2: KC lifecycle using the running example (extraction → consolidation → evaluation → final KC)
+- Figure 3: Example KC Results Excel (columns: kc_id, label, definition, anchors, bloom, example_assessment)
+- Figure 4: Example Evaluation Report Excel (metric scores, overall grade, run metadata)
+- Figure 5: Input data flow (PDF→Markdown conversion and anchor extraction)
 
 ## ✅ **Implementation Status**
 
@@ -793,114 +994,7 @@ outputSchema: z.object({
 
 #### **Code Implementation in Our Workflow**
 
-Here's how our Phase 3 workflow implements the evaluation step:
-
-```typescript
-// Step 4: KC Quality Evaluation
-const evaluateKCsStep = createStep({
-  id: "evaluate-kcs",
-  description: "Evaluate KC quality using Mastra built-in evaluation metrics",
-  execute: async ({ inputData }) => {
-    const { finalKCs, combinedContent, anchorList, extractionMetadata } =
-      inputData;
-
-    // Create evaluation model (same as extraction model)
-    const evalModel = google(
-      extractionMetadata.model_used.replace("google:", "")
-    );
-
-    // Prepare context for evaluation (course content as context)
-    const contextChunks = [combinedContent]; // ← CRITICAL: Real course content
-
-    // Initialize evaluation metrics
-    const faithfulnessMetric = new FaithfulnessMetric(evalModel, {
-      context: contextChunks, // Real course material
-      scale: 1,
-    });
-
-    const hallucinationMetric = new HallucinationMetric(evalModel, {
-      context: contextChunks, // Same course material
-      scale: 1,
-    });
-
-    const completenessMetric = new CompletenessMetric(); // No LLM needed
-
-    const answerRelevancyMetric = new AnswerRelevancyMetric(evalModel, {
-      scale: 1,
-    });
-
-    // Prepare KC content for evaluation
-    const kcSummary = finalKCs
-      .map(
-        (kc) =>
-          `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(", ")})`
-      )
-      .join("\n");
-
-    const courseQuery = `Extract knowledge components from the course "${courseMetadata.title}"`;
-
-    // Run evaluations in parallel for efficiency
-    const [
-      faithfulnessResult,
-      hallucinationResult,
-      completenessResult,
-      answerRelevancyResult,
-    ] = await Promise.all([
-      faithfulnessMetric.measure(courseQuery, kcSummary),
-      hallucinationMetric.measure(courseQuery, kcSummary),
-      completenessMetric.measure(combinedContent, kcSummary), // Note: different inputs
-      answerRelevancyMetric.measure(courseQuery, kcSummary),
-    ]);
-
-    // Calculate composite quality score
-    const overallScore =
-      (faithfulnessResult.score +
-        (1 - hallucinationResult.score) + // Inverted (lower hallucination = better)
-        completenessResult.score +
-        answerRelevancyResult.score) /
-      4;
-
-    // Assign letter grade and pass/fail
-    let grade: "A" | "B" | "C" | "D" | "F";
-    if (overallScore >= 0.9) grade = "A";
-    else if (overallScore >= 0.8) grade = "B";
-    else if (overallScore >= 0.7) grade = "C";
-    else if (overallScore >= 0.6) grade = "D";
-    else grade = "F";
-
-    const passThreshold = overallScore >= 0.7; // 70% minimum
-
-    return {
-      finalKCs,
-      courseMetadata,
-      extractionMetadata,
-      evaluationResults: {
-        faithfulness: {
-          score: faithfulnessResult.score,
-          reason: faithfulnessResult.info.reason,
-        },
-        hallucination: {
-          score: hallucinationResult.score,
-          reason: hallucinationResult.info.reason,
-        },
-        completeness: {
-          score: completenessResult.score,
-          info: completenessResult.info,
-        },
-        answerRelevancy: {
-          score: answerRelevancyResult.score,
-          reason: answerRelevancyResult.info.reason,
-        },
-        overallQuality: {
-          score: overallScore,
-          grade,
-          passThreshold,
-        },
-      },
-    };
-  },
-});
-```
+For a step‑by‑step implementation of the evaluation phase (including models, inputs, and parallel execution), see Appendix C.
 
 #### **Key Implementation Details**
 

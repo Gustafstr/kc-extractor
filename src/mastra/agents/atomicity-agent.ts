@@ -43,8 +43,8 @@ FOCUS AREAS:
 - Eliminate redundant or overlapping concepts
 - Prioritize precision over comprehensiveness
 
-Extract all atomic, unique KCs that represent the fundamental learning components. Generate as many KCs as necessary to comprehensively cover the course content while maintaining atomicity.`,
-    model: google(model.replace('google:', '')),
+Extract all atomic, unique KCs that represent the fundamental learning components. Generate at maximum 35 KCs, as necessary to comprehensively cover the course content while maintaining atomicity.`,
+    model: google(model),
   });
 }
 
@@ -72,8 +72,6 @@ Extract all atomic Knowledge Components that meet the criteria. Each KC must be:
 - Unique (no duplicates or synonyms)
 - Action-oriented with clear verbs
 - Directly supported by course content
-
-Generate as many KCs as necessary for comprehensive coverage while maintaining atomicity.
 
 Return a JSON array following this structure:
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[

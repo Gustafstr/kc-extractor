@@ -71,8 +71,8 @@ FOCUS AREAS:
 - Create a balanced distribution across Bloom levels
 - Prioritize higher-order thinking when content supports it
 
-Extract all KCs with accurate Bloom taxonomy classification and verb alignment. Generate as many properly classified KCs as needed to cover the course content across appropriate cognitive levels.`,
-    model: google(model.replace('google:', '')),
+Extract all KCs with accurate Bloom taxonomy classification and verb alignment. Generate at maximum 35 KCs`,
+    model: google(model),
   });
 }
 
@@ -108,8 +108,6 @@ Extract all Knowledge Components with precise Bloom classification. Each KC must
 - Have cognitive complexity appropriate for the course
 - Show accurate verb-taxonomy mapping
 - Represent a balanced distribution across Bloom levels when possible
-
-Generate as many properly classified KCs as needed for comprehensive cognitive coverage.
 
 Return a JSON array following this structure:
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[

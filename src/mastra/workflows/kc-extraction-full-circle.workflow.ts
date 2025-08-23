@@ -3,13 +3,15 @@ import { z } from 'zod';
 import { google } from '@ai-sdk/google';
 import { pythonPdfConverterTool } from '../tools/python-pdf-converter.tool';
 import { courseLoaderTool } from '../tools/course-loader.tool';
-import { excelExportTool } from '../tools/excel-export.tool';
+import { kcResultsExportTool } from '../tools/kc-results-export.tool';
+import { evaluationReportExportTool } from '../tools/evaluation-report-export.tool';
 import { createAtomicityAgent, createAtomicityPrompt } from '../agents/atomicity-agent';
 import { createAnchorsAgent, createAnchorsPrompt } from '../agents/anchors-agent';
 import { createAssessmentAgent, createAssessmentPrompt } from '../agents/assessment-agent';
 import { createBloomAgent, createBloomPrompt } from '../agents/bloom-agent';
 import { createMasterConsolidatorAgent, createMasterConsolidationPrompt } from '../agents/master-consolidator.agent';
 import { KCArraySchema } from '../schemas/kc';
+import { retryAgentGenerate } from '../utils/retry';
 
 // Import Mastra evaluation metrics
 import { FaithfulnessMetric } from '@mastra/evals/llm';
@@ -22,7 +24,7 @@ const inputSchema = z.object({
   pdfDir: z.string().default('src/mastra/Input/PDFs').describe('Directory containing PDF files to convert'),
   markdownDir: z.string().default('src/mastra/Input/Converted').describe('Directory to store converted markdown files'),
   outDir: z.string().default('out'),
-  model: z.string().default('google:gemini-2.5-pro'),
+  model: z.string().default('gemini-1.5-pro'),
   courseTitle: z.string().default('Course Knowledge Components'),
   datalabApiKey: z.string().optional().describe('Datalab API key for PDF conversion (optional if skipConversion is true)'),
   skipConversion: z.boolean().default(false).describe('Skip PDF conversion and use existing markdown files'),
@@ -36,10 +38,16 @@ const outputSchema = z.object({
     validKCs: z.number(),
     outputFiles: z.array(z.string()),
     pdfConversions: z.number(),
-    excelExport: z.object({
+    kcResultsExport: z.object({
       filePath: z.string(),
       sheetsCreated: z.array(z.string()),
       totalKCs: z.number(),
+    }).optional(),
+    evaluationReport: z.object({
+      filePath: z.string(),
+      sheetsCreated: z.array(z.string()),
+      overallGrade: z.string(),
+      overallScore: z.number(),
     }).optional(),
   }),
   finalKCs: KCArraySchema,
@@ -405,9 +413,11 @@ const atomicityExtractionStep = createStep({
     console.log(`📝 Content length: ${combinedContent.length} chars, Anchors: ${anchorList.length}`);
 
     try {
-      const atomicityResult = await atomicityAgent.generate(
-        [{ role: 'user', content: atomicityPrompt }],
-        { output: KCArraySchema }
+      const atomicityResult = await retryAgentGenerate(
+        () => atomicityAgent.generate(
+          [{ role: 'user', content: atomicityPrompt }],
+          { output: KCArraySchema }
+        )
       );
 
       console.log(`✅ Atomicity Agent extracted ${atomicityResult.object?.length || 0} KCs`);
@@ -475,9 +485,11 @@ const anchorsExtractionStep = createStep({
     console.log(`🤖 Running Anchors Agent with ${model}`);
 
     try {
-      const anchorsResult = await anchorsAgent.generate(
-        [{ role: 'user', content: anchorsPrompt }],
-        { output: KCArraySchema }
+      const anchorsResult = await retryAgentGenerate(
+        () => anchorsAgent.generate(
+          [{ role: 'user', content: anchorsPrompt }],
+          { output: KCArraySchema }
+        )
       );
 
       console.log(`✅ Anchors Agent extracted ${anchorsResult.object?.length || 0} KCs`);
@@ -543,9 +555,11 @@ const assessmentExtractionStep = createStep({
     console.log(`🤖 Running Assessment Agent with ${model}`);
 
     try {
-      const assessmentResult = await assessmentAgent.generate(
-        [{ role: 'user', content: assessmentPrompt }],
-        { output: KCArraySchema }
+      const assessmentResult = await retryAgentGenerate(
+        () => assessmentAgent.generate(
+          [{ role: 'user', content: assessmentPrompt }],
+          { output: KCArraySchema }
+        )
       );
 
       console.log(`✅ Assessment Agent extracted ${assessmentResult.object?.length || 0} KCs`);
@@ -610,9 +624,11 @@ const bloomExtractionStep = createStep({
 
     console.log(`🤖 Running Bloom Agent with ${model}`);
 
-    const bloomResult = await bloomAgent.generate(
-      [{ role: 'user', content: bloomPrompt }],
-      { output: KCArraySchema }
+    const bloomResult = await retryAgentGenerate(
+      () => bloomAgent.generate(
+        [{ role: 'user', content: bloomPrompt }],
+        { output: KCArraySchema }
+      )
     );
 
     console.log(`✅ Bloom Agent extracted ${bloomResult.object?.length || 0} KCs`);
@@ -692,6 +708,7 @@ const masterConsolidationStep = createStep({
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
     anchorList: z.array(z.string()),
+    courseTitle: z.string(),
     extractionMetadata: z.object({
       model_used: z.string(),
       phase: z.string(),
@@ -731,9 +748,11 @@ const masterConsolidationStep = createStep({
     );
 
     // Run master consolidation
-    const consolidationResult = await masterAgent.generate(
-      [{ role: 'user', content: consolidationPrompt }],
-      { output: KCArraySchema }
+    const consolidationResult = await retryAgentGenerate(
+      () => masterAgent.generate(
+        [{ role: 'user', content: consolidationPrompt }],
+        { output: KCArraySchema }
+      )
     );
 
     const finalKCs = consolidationResult.object || [];
@@ -763,6 +782,87 @@ const masterConsolidationStep = createStep({
   },
 });
 
+// Step 3.5: KC Results Export (after master consolidation, before evaluation)
+const kcResultsExportStep = createStep({
+  id: 'kc-results-export',
+  description: 'Export KC results to Excel format for immediate review',
+  inputSchema: z.object({
+    finalKCs: KCArraySchema,
+    courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+    combinedContent: z.string(),
+    anchorList: z.array(z.string()),
+    courseTitle: z.string(),
+    extractionMetadata: z.object({
+      model_used: z.string(),
+      phase: z.string(),
+      parallel_agents: z.number(),
+      total_processing_time: z.number(),
+      pdf_conversion_time: z.number(),
+      agent_contributions: z.object({
+        atomicity: z.number(),
+        anchors: z.number(),
+        assessment: z.number(),
+        bloom: z.number(),
+      }),
+    }),
+  }),
+  outputSchema: z.object({
+    finalKCs: KCArraySchema,
+    courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+    combinedContent: z.string(),
+    anchorList: z.array(z.string()),
+    courseTitle: z.string(),
+    extractionMetadata: z.object({
+      model_used: z.string(),
+      phase: z.string(),
+      parallel_agents: z.number(),
+      total_processing_time: z.number(),
+      pdf_conversion_time: z.number(),
+      agent_contributions: z.object({
+        atomicity: z.number(),
+        anchors: z.number(),
+        assessment: z.number(),
+        bloom: z.number(),
+      }),
+    }),
+    kcResultsExport: z.object({
+      filePath: z.string(),
+      sheetsCreated: z.array(z.string()),
+      totalKCs: z.number(),
+    }),
+  }),
+  execute: async ({ inputData, mastra }) => {
+    const { finalKCs, courseMetadata, extractionMetadata, courseTitle } = inputData;
+
+    // Generate KC Results Excel file path with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const outputPath = `out/KC-Results-${timestamp}.xlsx`;
+
+    console.log(`📊 Exporting ${finalKCs.length} KCs to Excel format (KC Results)...`);
+
+    // Use the KC Results export tool
+    const kcResultsExport = await kcResultsExportTool.execute({
+      context: {
+        finalKCs,
+        courseMetadata,
+        extractionMetadata,
+        courseTitle,
+        outputPath,
+      },
+      mastra,
+      runtimeContext: undefined as any,
+    });
+
+    console.log(`✅ KC Results Excel ready: ${outputPath}`);
+    console.log(`📋 You can now open and review the KC results while evaluation continues...`);
+
+    return {
+      ...inputData,
+      kcResultsExport,
+    };
+  },
+});
+
 // Common input schema for all evaluation steps (updated)
 const evaluationInputSchema = z.object({
   finalKCs: KCArraySchema,
@@ -783,6 +883,11 @@ const evaluationInputSchema = z.object({
       bloom: z.number(),
     }),
   }),
+  kcResultsExport: z.object({
+    filePath: z.string(),
+    sheetsCreated: z.array(z.string()),
+    totalKCs: z.number(),
+  }),
 });
 
 // Step 4a: Faithfulness Evaluation (same as phase3 but with updated schema)
@@ -802,6 +907,7 @@ const faithfulnessEvaluationStep = createStep({
     anchorList: z.array(z.string()),
     courseTitle: z.string(),
     extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+    kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
   }),
   execute: async ({ inputData }) => {
     const { finalKCs, courseMetadata, combinedContent, extractionMetadata, courseTitle } = inputData;
@@ -823,24 +929,68 @@ const faithfulnessEvaluationStep = createStep({
     const courseQuery = `Extract knowledge components from the course "${courseTitle}"`;
 
     console.log('📊 Running faithfulness evaluation...');
+    console.log(`   Context size: ${combinedContent.length} characters`);
+    console.log(`   KC summary size: ${kcSummary.length} characters`);
+    console.log(`   Number of KCs: ${finalKCs.length}`);
+    console.log(`   Estimated tokens: ~${Math.ceil((combinedContent.length + kcSummary.length) / 4)} tokens`);
 
-    // Run faithfulness evaluation
-    const faithfulnessResult = await faithfulnessMetric.measure(courseQuery, kcSummary);
+    try {
+      // Run faithfulness evaluation with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Faithfulness evaluation timeout after 2 minutes')), 120000)
+      );
+      
+      console.log('   ⏳ Calling faithfulness API...');
+      const startTime = Date.now();
+      
+      // Progress indicator
+      const progressInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        console.log(`   ⏳ Still waiting for faithfulness API... (${elapsed}s elapsed)`);
+      }, 10000); // Log every 10 seconds
+      
+      const faithfulnessResult = await Promise.race([
+        faithfulnessMetric.measure(courseQuery, kcSummary),
+        timeoutPromise
+      ]) as any;
+      
+      clearInterval(progressInterval);
+      
+      const duration = Date.now() - startTime;
+      console.log(`   ⏱️ Faithfulness API responded in ${duration}ms`);
 
-    console.log(`✅ Faithfulness score: ${faithfulnessResult.score.toFixed(3)}`);
+      console.log(`✅ Faithfulness score: ${faithfulnessResult.score.toFixed(3)}`);
 
-    return {
-      faithfulnessResult: {
-        score: faithfulnessResult.score,
-        reason: faithfulnessResult.info.reason,
-      },
-      finalKCs,
-      courseMetadata,
-      combinedContent,
-      anchorList: inputData.anchorList,
-      courseTitle,
-      extractionMetadata,
-    };
+      return {
+        faithfulnessResult: {
+          score: faithfulnessResult.score,
+          reason: faithfulnessResult.info.reason,
+        },
+        finalKCs,
+        courseMetadata,
+        combinedContent,
+        anchorList: inputData.anchorList,
+        courseTitle,
+        extractionMetadata,
+        kcResultsExport: inputData.kcResultsExport,
+      };
+    } catch (error) {
+      console.error('❌ Faithfulness evaluation failed:', error);
+      // Return a default score on error
+      return {
+        faithfulnessResult: {
+          score: 0.5,
+          reason: `Evaluation failed: ${error instanceof Error ? error.message : 'Unknown error'}. Using default score.`,
+        },
+        finalKCs,
+        courseMetadata,
+        combinedContent,
+        anchorList: inputData.anchorList,
+        courseTitle,
+        extractionMetadata,
+        kcResultsExport: inputData.kcResultsExport,
+      };
+    }
   },
 });
 
@@ -858,8 +1008,10 @@ const hallucinationEvaluationStep = createStep({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
+    anchorList: z.array(z.string()),
     courseTitle: z.string(),
     extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+    kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
   }),
   execute: async ({ inputData }) => {
     const { finalKCs, courseMetadata, combinedContent, extractionMetadata, courseTitle } = inputData;
@@ -881,23 +1033,60 @@ const hallucinationEvaluationStep = createStep({
     const courseQuery = `Extract knowledge components from the course "${courseTitle}"`;
 
     console.log('📊 Running hallucination evaluation...');
+    console.log(`   Context size: ${combinedContent.length} characters`);
+    console.log(`   KC summary size: ${kcSummary.length} characters`);
+    console.log(`   Number of KCs: ${finalKCs.length}`);
+    console.log(`   Estimated tokens: ~${Math.ceil((combinedContent.length + kcSummary.length) / 4)} tokens`);
 
-    // Run hallucination evaluation
-    const hallucinationResult = await hallucinationMetric.measure(courseQuery, kcSummary);
+    try {
+      // Run hallucination evaluation with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Hallucination evaluation timeout after 2 minutes')), 120000)
+      );
+      
+      console.log('   ⏳ Calling hallucination API...');
+      const startTime = Date.now();
+      
+      const hallucinationResult = await Promise.race([
+        hallucinationMetric.measure(courseQuery, kcSummary),
+        timeoutPromise
+      ]) as any;
+      
+      const duration = Date.now() - startTime;
+      console.log(`   ⏱️ Hallucination API responded in ${duration}ms`);
 
-    console.log(`✅ Hallucination score: ${hallucinationResult.score.toFixed(3)}`);
+      console.log(`✅ Hallucination score: ${hallucinationResult.score.toFixed(3)}`);
 
-    return {
-      hallucinationResult: {
-        score: hallucinationResult.score,
-        reason: hallucinationResult.info.reason,
-      },
-      finalKCs,
-      courseMetadata,
-      combinedContent,
-      courseTitle,
-      extractionMetadata,
-    };
+      return {
+        hallucinationResult: {
+          score: hallucinationResult.score,
+          reason: hallucinationResult.info.reason,
+        },
+        finalKCs,
+        courseMetadata,
+        combinedContent,
+        anchorList: inputData.anchorList,
+        courseTitle,
+        extractionMetadata,
+        kcResultsExport: inputData.kcResultsExport,
+      };
+    } catch (error) {
+      console.error('❌ Hallucination evaluation failed:', error);
+      // Return a default score on error
+      return {
+        hallucinationResult: {
+          score: 0.5,
+          reason: `Evaluation failed: ${error instanceof Error ? error.message : 'Unknown error'}. Using default score.`,
+        },
+        finalKCs,
+        courseMetadata,
+        combinedContent,
+        anchorList: inputData.anchorList,
+        courseTitle,
+        extractionMetadata,
+        kcResultsExport: inputData.kcResultsExport,
+      };
+    }
   },
 });
 
@@ -915,8 +1104,10 @@ const completenessEvaluationStep = createStep({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
+    anchorList: z.array(z.string()),
     courseTitle: z.string(),
     extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+    kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
   }),
   execute: async ({ inputData }) => {
     const { finalKCs, courseMetadata, combinedContent, extractionMetadata, courseTitle } = inputData;
@@ -930,23 +1121,60 @@ const completenessEvaluationStep = createStep({
     ).join('\n');
 
     console.log('📊 Running completeness evaluation...');
+    console.log(`   Context size: ${combinedContent.length} characters`);
+    console.log(`   KC summary size: ${kcSummary.length} characters`);
+    console.log(`   Number of KCs: ${finalKCs.length}`);
+    console.log(`   Note: Completeness is NLP-based (no LLM API call)`);
 
-    // Run completeness evaluation (note: different input order)
-    const completenessResult = await completenessMetric.measure(combinedContent, kcSummary);
+    try {
+      // Run completeness evaluation with timeout (even though it's NLP-based)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Completeness evaluation timeout after 2 minutes')), 120000)
+      );
+      
+      console.log('   ⏳ Running NLP analysis...');
+      const startTime = Date.now();
+      
+      const completenessResult = await Promise.race([
+        completenessMetric.measure(combinedContent, kcSummary),
+        timeoutPromise
+      ]) as any;
+      
+      const duration = Date.now() - startTime;
+      console.log(`   ⏱️ Completeness analysis completed in ${duration}ms`);
 
-    console.log(`✅ Completeness score: ${completenessResult.score.toFixed(3)}`);
+      console.log(`✅ Completeness score: ${completenessResult.score.toFixed(3)}`);
 
-    return {
-      completenessResult: {
-        score: completenessResult.score,
-        info: completenessResult.info,
-      },
-      finalKCs,
-      courseMetadata,
-      combinedContent,
-      courseTitle,
-      extractionMetadata,
-    };
+      return {
+        completenessResult: {
+          score: completenessResult.score,
+          info: completenessResult.info,
+        },
+        finalKCs,
+        courseMetadata,
+        combinedContent,
+        anchorList: inputData.anchorList,
+        courseTitle,
+        extractionMetadata,
+        kcResultsExport: inputData.kcResultsExport,
+      };
+    } catch (error) {
+      console.error('❌ Completeness evaluation failed:', error);
+      // Return a default score on error
+      return {
+        completenessResult: {
+          score: 0.5,
+          info: { error: error instanceof Error ? error.message : 'Unknown error' },
+        },
+        finalKCs,
+        courseMetadata,
+        combinedContent,
+        anchorList: inputData.anchorList,
+        courseTitle,
+        extractionMetadata,
+        kcResultsExport: inputData.kcResultsExport,
+      };
+    }
   },
 });
 
@@ -964,8 +1192,10 @@ const answerRelevancyEvaluationStep = createStep({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
+    anchorList: z.array(z.string()),
     courseTitle: z.string(),
     extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+    kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
   }),
   execute: async ({ inputData }) => {
     const { finalKCs, courseMetadata, combinedContent, extractionMetadata, courseTitle } = inputData;
@@ -986,23 +1216,52 @@ const answerRelevancyEvaluationStep = createStep({
     const courseQuery = `Extract knowledge components from the course "${courseTitle}"`;
 
     console.log('📊 Running answer relevancy evaluation...');
+    console.log(`   Context size: ${combinedContent.length} characters`);
+    console.log(`   KC summary size: ${kcSummary.length} characters`);
 
-    // Run answer relevancy evaluation
-    const answerRelevancyResult = await answerRelevancyMetric.measure(courseQuery, kcSummary);
+    try {
+      // Run answer relevancy evaluation with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Faithfulness evaluation timeout after 2 minutes')), 120000)
+      );
+      
+      const answerRelevancyResult = await Promise.race([
+        answerRelevancyMetric.measure(courseQuery, kcSummary),
+        timeoutPromise
+      ]) as any;
 
-    console.log(`✅ Answer relevancy score: ${answerRelevancyResult.score.toFixed(3)}`);
+      console.log(`✅ Answer relevancy score: ${answerRelevancyResult.score.toFixed(3)}`);
 
-    return {
-      answerRelevancyResult: {
-        score: answerRelevancyResult.score,
-        reason: answerRelevancyResult.info.reason,
-      },
-      finalKCs,
-      courseMetadata,
-      combinedContent,
-      courseTitle,
-      extractionMetadata,
-    };
+      return {
+        answerRelevancyResult: {
+          score: answerRelevancyResult.score,
+          reason: answerRelevancyResult.info.reason,
+        },
+        finalKCs,
+        courseMetadata,
+        combinedContent,
+        anchorList: inputData.anchorList,
+        courseTitle,
+        extractionMetadata,
+        kcResultsExport: inputData.kcResultsExport,
+      };
+    } catch (error) {
+      console.error('❌ Answer relevancy evaluation failed:', error);
+      // Return a default score on error
+      return {
+        answerRelevancyResult: {
+          score: 0.5,
+          reason: `Evaluation failed: ${error instanceof Error ? error.message : 'Unknown error'}. Using default score.`,
+        },
+        finalKCs,
+        courseMetadata,
+        combinedContent,
+        anchorList: inputData.anchorList,
+        courseTitle,
+        extractionMetadata,
+        kcResultsExport: inputData.kcResultsExport,
+      };
+    }
   },
 });
 
@@ -1019,8 +1278,10 @@ const consolidateEvaluationStep = createStep({
       finalKCs: KCArraySchema,
       courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
       combinedContent: z.string(),
+      anchorList: z.array(z.string()),
       courseTitle: z.string(),
       extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+      kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
     }),
     'hallucination-evaluation': z.object({
       hallucinationResult: z.object({
@@ -1030,8 +1291,10 @@ const consolidateEvaluationStep = createStep({
       finalKCs: KCArraySchema,
       courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
       combinedContent: z.string(),
+      anchorList: z.array(z.string()),
       courseTitle: z.string(),
       extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+      kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
     }),
     'completeness-evaluation': z.object({
       completenessResult: z.object({
@@ -1041,8 +1304,10 @@ const consolidateEvaluationStep = createStep({
       finalKCs: KCArraySchema,
       courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
       combinedContent: z.string(),
+      anchorList: z.array(z.string()),
       courseTitle: z.string(),
       extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+      kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
     }),
     'answer-relevancy-evaluation': z.object({
       answerRelevancyResult: z.object({
@@ -1052,8 +1317,10 @@ const consolidateEvaluationStep = createStep({
       finalKCs: KCArraySchema,
       courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
       combinedContent: z.string(),
+      anchorList: z.array(z.string()),
       courseTitle: z.string(),
       extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+      kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
     }),
   }),
   outputSchema: z.object({
@@ -1083,6 +1350,7 @@ const consolidateEvaluationStep = createStep({
         passThreshold: z.boolean(),
       }),
     }),
+    kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
   }),
   execute: async ({ inputData }) => {
     // Extract results from all parallel evaluation steps
@@ -1092,7 +1360,7 @@ const consolidateEvaluationStep = createStep({
     const answerRelevancyResult = inputData['answer-relevancy-evaluation'].answerRelevancyResult;
 
     // Get metadata from first result (all should be the same)
-    const { finalKCs, courseMetadata, extractionMetadata } = inputData['faithfulness-evaluation'];
+    const { finalKCs, courseMetadata, extractionMetadata, kcResultsExport } = inputData['faithfulness-evaluation'];
 
     // Calculate overall quality score (average of all metrics)
     // Note: Hallucination is inverted (lower is better), so we use (1 - score)
@@ -1136,14 +1404,15 @@ const consolidateEvaluationStep = createStep({
           passThreshold,
         },
       },
+      kcResultsExport,
     };
   },
 });
 
-// Step 6: Excel Export
-const excelExportStep = createStep({
-  id: 'excel-export',
-  description: 'Export KC results to Excel format for expert review',
+// Step 6: Evaluation Report Export
+const evaluationReportExportStep = createStep({
+  id: 'evaluation-report-export',
+  description: 'Export evaluation results and quality metrics to Excel format',
   inputSchema: z.object({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
@@ -1183,6 +1452,7 @@ const excelExportStep = createStep({
         passThreshold: z.boolean(),
       }),
     }),
+    kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
   }),
   outputSchema: z.object({
     finalKCs: KCArraySchema,
@@ -1226,20 +1496,22 @@ const excelExportStep = createStep({
     excelExport: z.object({
       filePath: z.string(),
       sheetsCreated: z.array(z.string()),
-      totalKCs: z.number(),
+      overallGrade: z.string(),
+      overallScore: z.number(),
     }),
+    kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
   }),
   execute: async ({ inputData, mastra }) => {
-    const { finalKCs, courseMetadata, extractionMetadata, evaluationResults } = inputData;
+    const { finalKCs, courseMetadata, extractionMetadata, evaluationResults, kcResultsExport } = inputData;
 
-    // Generate Excel file path with timestamp
+    // Generate Evaluation Report Excel file path with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const outputPath = `out/KC-Extraction-Results-${timestamp}.xlsx`;
+    const outputPath = `out/Evaluation-Report-${timestamp}.xlsx`;
 
-    console.log(`📊 Exporting ${finalKCs.length} KCs to Excel format...`);
+    console.log(`📊 Exporting evaluation results and quality metrics to Excel format...`);
 
-    // Use the Excel export tool
-    const excelResult = await excelExportTool.execute({
+    // Use the Evaluation Report export tool
+    const evaluationReport = await evaluationReportExportTool.execute({
       context: {
         finalKCs,
         courseMetadata,
@@ -1257,7 +1529,8 @@ const excelExportStep = createStep({
       courseMetadata,
       extractionMetadata,
       evaluationResults,
-      excelExport: excelResult,
+      excelExport: evaluationReport,
+      kcResultsExport,
     };
   },
 });
@@ -1308,28 +1581,37 @@ const generateOutputStep = createStep({
     excelExport: z.object({
       filePath: z.string(),
       sheetsCreated: z.array(z.string()),
-      totalKCs: z.number(),
+      overallGrade: z.string(),
+      overallScore: z.number(),
     }),
+    kcResultsExport: evaluationInputSchema.shape.kcResultsExport,
   }),
   outputSchema,
   execute: async ({ inputData }) => {
-    const { finalKCs, courseMetadata, extractionMetadata, evaluationResults, excelExport } = inputData;
+    const { finalKCs, courseMetadata, extractionMetadata, evaluationResults, excelExport, kcResultsExport } = inputData;
 
     console.log(`🎉 Full Circle KC Extraction Complete!`);
     console.log(`📄 Processed ${courseMetadata.convertedPdfs} PDF files`);
     console.log(`📚 Generated ${finalKCs.length} final Knowledge Components`);
     console.log(`⏱️ PDF Conversion Time: ${extractionMetadata.pdf_conversion_time}ms`);
     console.log(`🏆 Overall Quality Grade: ${evaluationResults.overallQuality.grade}`);
-    console.log(`📊 Excel Export: ${excelExport.filePath}`);
+    console.log(`📊 KC Results Excel: ${kcResultsExport.filePath}`);
+    console.log(`📈 Evaluation Report Excel: ${excelExport.filePath}`);
 
     return {
       written: [],
       summary: {
         totalKCs: finalKCs.length,
         validKCs: finalKCs.filter(kc => kc.anchors && kc.anchors.length > 0).length,
-        outputFiles: [excelExport.filePath],
+        outputFiles: [kcResultsExport.filePath, excelExport.filePath],
         pdfConversions: courseMetadata.convertedPdfs,
-        excelExport,
+        kcResultsExport: kcResultsExport,
+        evaluationReport: {
+          filePath: excelExport.filePath,
+          sheetsCreated: excelExport.sheetsCreated,
+          overallGrade: evaluationResults.overallQuality.grade,
+          overallScore: evaluationResults.overallQuality.score,
+        },
       },
       finalKCs,
       courseMetadata,
@@ -1355,6 +1637,7 @@ const workflow = createWorkflow({
     bloomExtractionStep,
   ])
   .then(masterConsolidationStep)     // Step 3: Master consolidation
+  .then(kcResultsExportStep)         // Step 3.5: Export KC Results (immediate)
   .parallel([                        // Step 4: Parallel evaluation
     faithfulnessEvaluationStep,
     hallucinationEvaluationStep,
@@ -1362,7 +1645,7 @@ const workflow = createWorkflow({
     answerRelevancyEvaluationStep,
   ])
   .then(consolidateEvaluationStep)   // Step 5: Consolidate evaluations
-  .then(excelExportStep)             // Step 6: Export to Excel
+  .then(evaluationReportExportStep)  // Step 6: Export Evaluation Report
   .then(generateOutputStep);         // Step 7: Generate final output
 
 workflow.commit();
