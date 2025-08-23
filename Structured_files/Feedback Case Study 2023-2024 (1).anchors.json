@@ -1,0 +1,55 @@
+{
+  "file": "Feedback Case Study 2023-2024 (1).md",
+  "source_doc": "Feedback Case Study 2023-2024 (1).pdf",
+  "anchors": [
+    {
+      "id": "S0.p1",
+      "page": 0,
+      "paragraph_index": 1,
+      "char_start": 125,
+      "char_end": 173
+    },
+    {
+      "id": "S0.p2",
+      "page": 0,
+      "paragraph_index": 2,
+      "char_start": 218,
+      "char_end": 396
+    },
+    {
+      "id": "S0.p3",
+      "page": 0,
+      "paragraph_index": 3,
+      "char_start": 406,
+      "char_end": 706
+    },
+    {
+      "id": "S0.p4",
+      "page": 0,
+      "paragraph_index": 4,
+      "char_start": 716,
+      "char_end": 1171
+    },
+    {
+      "id": "S0.p5",
+      "page": 0,
+      "paragraph_index": 5,
+      "char_start": 1181,
+      "char_end": 1378
+    },
+    {
+      "id": "S1.p1",
+      "page": 1,
+      "paragraph_index": 1,
+      "char_start": 1435,
+      "char_end": 1518
+    },
+    {
+      "id": "S1.p2",
+      "page": 1,
+      "paragraph_index": 2,
+      "char_start": 1528,
+      "char_end": 2101
+    }
+  ]
+}

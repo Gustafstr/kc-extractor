@@ -1,0 +1,111 @@
+{
+  "file": "PPT Quiz Case Study Performance Appraisal 2023-2024.md",
+  "source_doc": "PPT Quiz Case Study Performance Appraisal 2023-2024.pdf",
+  "anchors": [
+    {
+      "id": "S0.p1",
+      "page": 0,
+      "paragraph_index": 1,
+      "char_start": 98,
+      "char_end": 146
+    },
+    {
+      "id": "S0.p2",
+      "page": 0,
+      "paragraph_index": 2,
+      "char_start": 177,
+      "char_end": 380
+    },
+    {
+      "id": "S1.p1",
+      "page": 1,
+      "paragraph_index": 1,
+      "char_start": 412,
+      "char_end": 619
+    },
+    {
+      "id": "S1.p2",
+      "page": 1,
+      "paragraph_index": 2,
+      "char_start": 653,
+      "char_end": 725
+    },
+    {
+      "id": "S2.p1",
+      "page": 2,
+      "paragraph_index": 1,
+      "char_start": 759,
+      "char_end": 835
+    },
+    {
+      "id": "S3.p1",
+      "page": 3,
+      "paragraph_index": 1,
+      "char_start": 867,
+      "char_end": 980
+    },
+    {
+      "id": "S3.p2",
+      "page": 3,
+      "paragraph_index": 2,
+      "char_start": 1012,
+      "char_end": 1129
+    },
+    {
+      "id": "S4.p1",
+      "page": 4,
+      "paragraph_index": 1,
+      "char_start": 1187,
+      "char_end": 1998
+    },
+    {
+      "id": "S4.p2",
+      "page": 4,
+      "paragraph_index": 2,
+      "char_start": 2008,
+      "char_end": 2949
+    },
+    {
+      "id": "S5.p1",
+      "page": 5,
+      "paragraph_index": 1,
+      "char_start": 2989,
+      "char_end": 3299
+    },
+    {
+      "id": "S6.p1",
+      "page": 6,
+      "paragraph_index": 1,
+      "char_start": 3325,
+      "char_end": 4026
+    },
+    {
+      "id": "S6.p2",
+      "page": 6,
+      "paragraph_index": 2,
+      "char_start": 4052,
+      "char_end": 4830
+    },
+    {
+      "id": "S7.p1",
+      "page": 7,
+      "paragraph_index": 1,
+      "char_start": 4856,
+      "char_end": 5309
+    },
+    {
+      "id": "S7.p2",
+      "page": 7,
+      "paragraph_index": 2,
+      "char_start": 5320,
+      "char_end": 6022
+    },
+    {
+      "id": "S8.p1",
+      "page": 8,
+      "paragraph_index": 1,
+      "char_start": 6033,
+      "char_end": 6330
+    }
+  ]
+}

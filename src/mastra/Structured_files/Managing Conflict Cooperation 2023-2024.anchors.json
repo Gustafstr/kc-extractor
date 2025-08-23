@@ -1,0 +1,258 @@
+{
+  "file": "Managing Conflict Cooperation 2023-2024.md",
+  "source_doc": "Managing Conflict Cooperation 2023-2024.pdf",
+  "anchors": [
+    {
+      "id": "S0.p1",
+      "page": 0,
+      "paragraph_index": 1,
+      "char_start": 96,
+      "char_end": 144
+    },
+    {
+      "id": "S0.p2",
+      "page": 0,
+      "paragraph_index": 2,
+      "char_start": 175,
+      "char_end": 305
+    },
+    {
+      "id": "S1.p1",
+      "page": 1,
+      "paragraph_index": 1,
+      "char_start": 368,
+      "char_end": 587
+    },
+    {
+      "id": "S2.p1",
+      "page": 2,
+      "paragraph_index": 1,
+      "char_start": 682,
+      "char_end": 900
+    },
+    {
+      "id": "S3.p1",
+      "page": 3,
+      "paragraph_index": 1,
+      "char_start": 935,
+      "char_end": 1109
+    },
+    {
+      "id": "S4.p1",
+      "page": 4,
+      "paragraph_index": 1,
+      "char_start": 1144,
+      "char_end": 1280
+    },
+    {
+      "id": "S5.p1",
+      "page": 5,
+      "paragraph_index": 1,
+      "char_start": 1291,
+      "char_end": 1442
+    },
+    {
+      "id": "S5.p2",
+      "page": 5,
+      "paragraph_index": 2,
+      "char_start": 1520,
+      "char_end": 1629
+    },
+    {
+      "id": "S5.p3",
+      "page": 5,
+      "paragraph_index": 3,
+      "char_start": 1656,
+      "char_end": 1754
+    },
+    {
+      "id": "S6.p1",
+      "page": 6,
+      "paragraph_index": 1,
+      "char_start": 1781,
+      "char_end": 1849
+    },
+    {
+      "id": "S6.p2",
+      "page": 6,
+      "paragraph_index": 2,
+      "char_start": 1912,
+      "char_end": 2012
+    },
+    {
+      "id": "S6.p3",
+      "page": 6,
+      "paragraph_index": 3,
+      "char_start": 2096,
+      "char_end": 2204
+    },
+    {
+      "id": "S7.p1",
+      "page": 7,
+      "paragraph_index": 1,
+      "char_start": 2231,
+      "char_end": 2329
+    },
+    {
+      "id": "S7.p2",
+      "page": 7,
+      "paragraph_index": 2,
+      "char_start": 2340,
+      "char_end": 2455
+    },
+    {
+      "id": "S7.p3",
+      "page": 7,
+      "paragraph_index": 3,
+      "char_start": 2465,
+      "char_end": 2652
+    },
+    {
+      "id": "S7.p4",
+      "page": 7,
+      "paragraph_index": 4,
+      "char_start": 2792,
+      "char_end": 3108
+    },
+    {
+      "id": "S8.p1",
+      "page": 8,
+      "paragraph_index": 1,
+      "char_start": 3169,
+      "char_end": 3393
+    },
+    {
+      "id": "S8.p2",
+      "page": 8,
+      "paragraph_index": 2,
+      "char_start": 3452,
+      "char_end": 3747
+    },
+    {
+      "id": "S9.p1",
+      "page": 9,
+      "paragraph_index": 1,
+      "char_start": 3888,
+      "char_end": 3906
+    },
+    {
+      "id": "S9.p2",
+      "page": 9,
+      "paragraph_index": 2,
+      "char_start": 3916,
+      "char_end": 3920
+    },
+    {
+      "id": "S9.p3",
+      "page": 9,
+      "paragraph_index": 3,
+      "char_start": 3930,
+      "char_end": 3954
+    },
+    {
+      "id": "S10.p1",
+      "page": 10,
+      "paragraph_index": 1,
+      "char_start": 4004,
+      "char_end": 4064
+    },
+    {
+      "id": "S10.p2",
+      "page": 10,
+      "paragraph_index": 2,
+      "char_start": 4075,
+      "char_end": 4094
+    },
+    {
+      "id": "S11.p1",
+      "page": 11,
+      "paragraph_index": 1,
+      "char_start": 4125,
+      "char_end": 4224
+    },
+    {
+      "id": "S11.p2",
+      "page": 11,
+      "paragraph_index": 2,
+      "char_start": 4235,
+      "char_end": 4253
+    },
+    {
+      "id": "S11.p3",
+      "page": 11,
+      "paragraph_index": 3,
+      "char_start": 4264,
+      "char_end": 4268
+    },
+    {
+      "id": "S12.p1",
+      "page": 12,
+      "paragraph_index": 1,
+      "char_start": 4279,
+      "char_end": 4297
+    },
+    {
+      "id": "S12.p2",
+      "page": 12,
+      "paragraph_index": 2,
+      "char_start": 4344,
+      "char_end": 4426
+    },
+    {
+      "id": "S13.p1",
+      "page": 13,
+      "paragraph_index": 1,
+      "char_start": 4530,
+      "char_end": 4578
+    },
+    {
+      "id": "S13.p2",
+      "page": 13,
+      "paragraph_index": 2,
+      "char_start": 4589,
+      "char_end": 4733
+    },
+    {
+      "id": "S13.p3",
+      "page": 13,
+      "paragraph_index": 3,
+      "char_start": 4744,
+      "char_end": 5093
+    },
+    {
+      "id": "S14.p1",
+      "page": 14,
+      "paragraph_index": 1,
+      "char_start": 5148,
+      "char_end": 5380
+    },
+    {
+      "id": "S14.p2",
+      "page": 14,
+      "paragraph_index": 2,
+      "char_start": 5391,
+      "char_end": 5450
+    },
+    {
+      "id": "S15.p1",
+      "page": 15,
+      "paragraph_index": 1,
+      "char_start": 5461,
+      "char_end": 5538
+    },
+    {
+      "id": "S15.p2",
+      "page": 15,
+      "paragraph_index": 2,
+      "char_start": 5577,
+      "char_end": 5650
+    },
+    {
+      "id": "S16.p1",
+      "page": 16,
+      "paragraph_index": 1,
+      "char_start": 5696,
+      "char_end": 6272
+    }
+  ]
+}

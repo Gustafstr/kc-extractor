@@ -1,0 +1,163 @@
+{
+  "written": [],
+  "summary": {
+    "totalKCs": 15,
+    "validKCs": 15,
+    "outputFiles": [],
+    "agentContributions": {
+      "atomicity": 10,
+      "anchors": 10,
+      "assessment": 10,
+      "bloom": 9,
+      "final": 15
+    }
+  },
+  "kcs": [
+    {
+      "anchors": ["S0.p5"],
+      "bloom": "Remember",
+      "definition": "Acknowledge, understand, accept, and value differences among people based on age, class, race, ethnicity, gender, and disabilities.",
+      "example_assessment": "Provide a definition of workplace diversity, including at least three dimensions of difference.",
+      "kc_id": "KC-01-001",
+      "label": "Define workplace diversity",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p8", "S0.p12", "S0.p13", "S0.p14", "S0.p15"],
+      "bloom": "Understand",
+      "definition": "Explain how shifts in workforce composition, family structures, organizational practices, and legal frameworks necessitate diversity management.",
+      "example_assessment": "Describe how changes in family structure have influenced the need for diversity management in organizations.",
+      "kc_id": "KC-01-002",
+      "label": "Explain factors influencing diversity management",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p2", "S0.p7", "S0.p16", "S0.p22"],
+      "bloom": "Understand",
+      "definition": "Describe how diversity leads to increased productivity, competitive advantage, reduced lawsuits, enhanced creativity, and improved business image.",
+      "example_assessment": "Explain two ways a diverse workforce provides an organization with a competitive edge.",
+      "kc_id": "KC-01-003",
+      "label": "Explain the benefits of workplace diversity",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p17"],
+      "bloom": "Remember",
+      "definition": "Recognize common difficulties in overseeing a diverse workforce, including potential losses in productivity and legal actions.",
+      "example_assessment": "List two common challenges managers face when leading a diverse workforce.",
+      "kc_id": "KC-01-004",
+      "label": "Identify challenges of managing workplace diversity",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p18"],
+      "bloom": "Understand",
+      "definition": "Describe how prejudice, stereotyping, and discrimination act as barriers, harming relationships, morale, and productivity in a diverse workplace.",
+      "example_assessment": "How do prejudice and discrimination negatively affect a diverse workplace's morale and productivity?",
+      "kc_id": "KC-01-005",
+      "label": "Explain negative attitudes as barriers to diversity",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p18"],
+      "bloom": "Analyze",
+      "definition": "Distinguish between prejudice, stereotyping, and discrimination as barriers to effective diversity management.",
+      "example_assessment": "Provide an example of stereotyping and explain how it differs from prejudice in a workplace setting.",
+      "kc_id": "KC-01-006",
+      "label": "Differentiate negative attitudes in the workplace",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p19", "S0.p20"],
+      "bloom": "Analyze",
+      "definition": "Examine one's own preconceived notions and judgments about different cultural groups to understand their potential impact on decisions.",
+      "example_assessment": "Reflect on a past interaction and analyze how your cultural biases might have influenced your perception.",
+      "kc_id": "KC-01-007",
+      "label": "Analyze personal cultural biases and prejudices",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p21"],
+      "bloom": "Analyze",
+      "definition": "Explain that diversity management is a broader, comprehensive process focused on inclusion, beyond legal compliance or corrective measures.",
+      "example_assessment": "What is the key difference between diversity management and Equal Employment Opportunity (EEO)?",
+      "kc_id": "KC-01-008",
+      "label": "Differentiate diversity management from EEO/Affirmative Action",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p22"],
+      "bloom": "Understand",
+      "definition": "Describe how educating employees about diversity issues, laws, and regulations helps create a fair and safe work environment.",
+      "example_assessment": "How does educating all employees about diversity issues contribute to effective diversity management?",
+      "kc_id": "KC-01-009",
+      "label": "Explain the role of education in diversity management",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p20"],
+      "bloom": "Create",
+      "definition": "Formulate a plan for continuous education and awareness initiatives to foster an inclusive work environment and change behaviors.",
+      "example_assessment": "Outline a multi-stage training program designed to address unconscious bias in a company.",
+      "kc_id": "KC-01-010",
+      "label": "Develop ongoing diversity training programs",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p20"],
+      "bloom": "Analyze",
+      "definition": "Explain that fairness considers individual needs and circumstances to ensure equitable outcomes, while equality treats everyone the same.",
+      "example_assessment": "Provide an example where treating everyone equally might not be fair in a diverse workplace context.",
+      "kc_id": "KC-01-011",
+      "label": "Differentiate between fairness and equality in diversity management",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p19", "S0.p20", "S0.p21"],
+      "bloom": "Apply",
+      "definition": "Utilize effective managerial tools such as understanding discrimination, recognizing biases, and implementing organizational change.",
+      "example_assessment": "Given a scenario of workplace conflict, propose a strategy to resolve it using diversity management tools.",
+      "kc_id": "KC-01-012",
+      "label": "Apply strategies for managing diverse workforces",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p3", "S0.p12", "S0.p19", "S0.p22"],
+      "bloom": "Evaluate",
+      "definition": "Assess why organizations must review and change their management practices to accommodate a multicultural work environment.",
+      "example_assessment": "Justify why an organization must adapt its practices to effectively manage a diverse workforce.",
+      "kc_id": "KC-01-013",
+      "label": "Evaluate the necessity of organizational adaptation for diversity",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p19"],
+      "bloom": "Remember",
+      "definition": "Recognize the skills effective managers need, such as understanding discrimination and recognizing biases, to manage a diverse workforce.",
+      "example_assessment": "Which skill is essential for managers to effectively manage a diverse workforce?",
+      "kc_id": "KC-01-014",
+      "label": "Identify essential managerial skills for diversity management",
+      "module": "Diversity in the Workplace"
+    },
+    {
+      "anchors": ["S0.p22"],
+      "bloom": "Understand",
+      "definition": "Summarize how diversity management aims to create a fair, safe, and inclusive environment, providing access to opportunities for all associates.",
+      "example_assessment": "Describe the primary goals of implementing diversity management practices in an organization.",
+      "kc_id": "KC-01-015",
+      "label": "Summarize the purpose of diversity management",
+      "module": "Diversity in the Workplace"
+    }
+  ],
+  "courseMetadata": {
+    "title": "Human Resource and Diversity Management",
+    "totalFiles": 1,
+    "totalAnchors": 32
+  },
+  "extractionMetadata": {
+    "model_used": "google:gemini-2.5-flash",
+    "phase": "Phase 2 - Multi-Agent Parallel Processing (Visual)",
+    "parallel_agents": 4,
+    "total_processing_time": 0
+  }
+}

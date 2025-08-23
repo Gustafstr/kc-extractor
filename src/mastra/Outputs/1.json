@@ -1,0 +1,164 @@
+{
+  "written": [],
+  "summary": {
+    "totalKCs": 16,
+    "validKCs": 16,
+    "outputFiles": []
+  },
+  "kcs": [
+    {
+      "anchors": ["S0.p5"],
+      "bloom": "Remember",
+      "definition": "Define diversity as the acknowledgment, understanding, acceptance, and valuation of differences among people, including age, class, race, gender, and ability.",
+      "example_assessment": "What are the four key actions involved in the definition of diversity (acknowledging, understanding, etc.)?",
+      "kc_id": "KC-HRDM-01-001",
+      "label": "Define workplace diversity",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p2"],
+      "bloom": "Understand",
+      "definition": "Explain how increasing globalization necessitates more interaction among diverse people, making diversity crucial for organizations to remain competitive.",
+      "example_assessment": "Why has globalization made managing workplace diversity a more important issue for organizations?",
+      "kc_id": "KC-HRDM-01-002",
+      "label": "Explain the impact of globalization on workplace diversity",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p8", "S0.p13"],
+      "bloom": "Remember",
+      "definition": "Identify key demographic shifts impacting the workplace, such as the increase of women, dual-income families, and single working mothers.",
+      "example_assessment": "List two demographic changes that have altered the dynamics of the modern workplace.",
+      "kc_id": "KC-HRDM-01-003",
+      "label": "Identify demographic changes affecting the workplace",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p14"],
+      "bloom": "Understand",
+      "definition": "Describe how organizational restructuring trends like downsizing and outsourcing have changed human resource management, often resulting in fewer people doing more work.",
+      "example_assessment": "How have downsizing and outsourcing affected the responsibilities of the remaining employees in an organization?",
+      "kc_id": "KC-HRDM-01-004",
+      "label": "Describe the effects of organizational restructuring on human resources",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p15"],
+      "bloom": "Understand",
+      "definition": "Explain that equal opportunity laws make workplace discrimination illegal and define the rights and responsibilities for both employees and employers.",
+      "example_assessment": "What is the primary purpose of equal opportunity legislation in the workplace?",
+      "kc_id": "KC-HRDM-01-005",
+      "label": "Explain the role of equal opportunity legislation",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p16"],
+      "bloom": "Remember",
+      "definition": "List the organizational benefits of a diverse workplace, including reduced lawsuits, improved marketing, better recruitment, increased creativity, and enhanced business image.",
+      "example_assessment": "List three distinct benefits that a diverse workforce can bring to a company.",
+      "kc_id": "KC-HRDM-01-006",
+      "label": "Identify the benefits of diversity for an organization",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p7", "S0.p16"],
+      "bloom": "Understand",
+      "definition": "Explain that in an era where flexibility and creativity are key, diversity is a critical asset that can lead to greater productivity and competitive advantages.",
+      "example_assessment": "Explain how having a diverse team can lead to a competitive advantage in the market.",
+      "kc_id": "KC-HRDM-01-007",
+      "label": "Explain how diversity provides a competitive advantage",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p17"],
+      "bloom": "Understand",
+      "definition": "Describe the primary challenges of managing diversity, which include recognizing the value of differences, combating discrimination, and promoting inclusiveness.",
+      "example_assessment": "Beyond simply acknowledging differences, what are two key challenges managers face when managing diversity?",
+      "kc_id": "KC-HRDM-01-008",
+      "label": "Describe the core challenges of managing a diverse workforce",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p18"],
+      "bloom": "Remember",
+      "definition": "Identify negative attitudes and behaviors like prejudice, stereotyping, and discrimination that act as barriers to diversity and harm working relationships.",
+      "example_assessment": "Name two negative behaviors that can damage morale and productivity in a diverse workplace.",
+      "kc_id": "KC-HRDM-01-009",
+      "label": "Identify negative attitudes and behaviors that are barriers to diversity",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p17", "S0.p18"],
+      "bloom": "Understand",
+      "definition": "Explain that prejudice and discrimination can lead to losses in personnel and productivity, damage morale, and result in costly legal action against an organization.",
+      "example_assessment": "What are the potential organizational consequences of unchecked discrimination in the workplace?",
+      "kc_id": "KC-HRDM-01-010",
+      "label": "Explain the consequences of prejudice and discrimination in the workplace",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p19"],
+      "bloom": "Remember",
+      "definition": "List the essential skills for managers of diverse teams: understanding discrimination, recognizing personal biases, and being willing to enact organizational change.",
+      "example_assessment": "What are the three essential skills a manager needs to create a successful, diverse workforce?",
+      "kc_id": "KC-HRDM-01-011",
+      "label": "List the essential skills for managing a diverse workforce",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p19", "S0.p20"],
+      "bloom": "Understand",
+      "definition": "Explain that personal awareness is crucial for managers and associates to recognize their own cultural biases and prejudices, which is a first step to managing them.",
+      "example_assessment": "Why is it important for a manager to first recognize their own cultural biases?",
+      "kc_id": "KC-HRDM-01-012",
+      "label": "Explain the importance of self-awareness for managing personal biases",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p20"],
+      "bloom": "Understand",
+      "definition": "Justify the need for continuous diversity training by explaining that a single session is insufficient to change long-held behaviors and biases.",
+      "example_assessment": "Why is a one-day training session generally ineffective for creating lasting change in a diverse workforce?",
+      "kc_id": "KC-HRDM-01-013",
+      "label": "Justify the need for ongoing diversity training",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p20"],
+      "bloom": "Understand",
+      "definition": "Differentiate between fairness, which involves treating people appropriately based on their unique needs, and equality, which means treating everyone the same.",
+      "example_assessment": "Provide an example that illustrates the difference between fairness and equality in the workplace.",
+      "kc_id": "KC-HRDM-01-014",
+      "label": "Differentiate between fairness and equality in diversity management",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p21"],
+      "bloom": "Understand",
+      "definition": "Distinguish diversity management, a comprehensive process for creating an inclusive environment, from compliance-based EEO and affirmative action programs.",
+      "example_assessment": "How does the goal of 'managing diversity' differ from the goals of 'equal employment opportunity' laws?",
+      "kc_id": "KC-HRDM-01-015",
+      "label": "Distinguish diversity management from EEO and affirmative action",
+      "module": "Diversity Management Fundamentals"
+    },
+    {
+      "anchors": ["S0.p22"],
+      "bloom": "Understand",
+      "definition": "Explain that effective diversity management benefits employees by creating a fair and safe work environment where everyone has access to opportunities and challenges.",
+      "example_assessment": "Describe how a well-managed diverse workplace benefits the employees within it.",
+      "kc_id": "KC-HRDM-01-016",
+      "label": "Explain how diversity management benefits employees",
+      "module": "Diversity Management Fundamentals"
+    }
+  ],
+  "courseMetadata": {
+    "title": "Human Resource and Diversity Management",
+    "totalFiles": 1,
+    "totalAnchors": 32
+  },
+  "extractionMetadata": {
+    "model_used": "google:gemini-2.5-pro",
+    "prompt_length": 11243,
+    "anchors_available": 32
+  }
+}
