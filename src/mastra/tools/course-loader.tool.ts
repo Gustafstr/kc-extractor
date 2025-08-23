@@ -26,33 +26,11 @@ export const courseLoaderTool = createTool({
   execute: async ({ context }) => {
     const { dir } = context;
     
-    // Resolve directory path (handle both absolute and relative paths)
-    const cwd = process.cwd();
-    let baseDir = dir;
-    
-    if (!path.isAbsolute(baseDir)) {
-      const primary = path.resolve(cwd, baseDir);
-      try {
-        const st = await fs.stat(primary);
-        if (st.isDirectory()) {
-          baseDir = primary;
-        } else {
-          throw new Error('not dir');
-        }
-      } catch {
-        const alt = path.resolve(cwd, '../../', baseDir);
-        try {
-          const st2 = await fs.stat(alt);
-          if (st2.isDirectory()) {
-            baseDir = alt;
-          } else {
-            throw new Error('not dir');
-          }
-        } catch {
-          throw new Error(`Directory not found. Tried: ${primary} and ${alt}`);
-        }
-      }
-    }
+    // Resolve directory path relative to project root (same logic as PDF conversion)
+    const projectRoot = process.cwd().includes('.mastra') 
+      ? path.resolve(process.cwd(), '../..') 
+      : process.cwd();
+    const baseDir = path.resolve(projectRoot, dir);
 
     // Read directory contents
     const entries = await fs.readdir(baseDir);

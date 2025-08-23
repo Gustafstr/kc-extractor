@@ -948,12 +948,224 @@ const evaluateKCsStep = createStep({
 
 ---
 
-**Current Status**: Phase 3 complete with comprehensive quality evaluation! 🚀  
-**Research Achievement**: Demonstrates complete multi-agent educational AI system with quality assurance  
-**Thesis Contribution**: Provides comprehensive technical documentation for advanced AI workflow orchestration
+### **Full Circle: COMPLETED** 🎯
+
+**Complete PDF-to-KC pipeline with Datalab API integration for end-to-end document processing**
+
+#### **Files Created:**
+
+- `src/mastra/tools/pdf-converter.tool.ts` - Datalab API integration for PDF to Markdown conversion
+- `src/mastra/workflows/kc-extraction-full-circle.workflow.ts` - Complete end-to-end workflow
+- `cli/run-kc.ts` - Updated CLI with multi-workflow support
+- `README-Full-Circle.md` - Comprehensive documentation for the full-circle workflow
+
+#### **Workflow Structure (Full Circle):**
+
+```typescript
+const workflow = createWorkflow({
+  id: "kc-extraction-full-circle",
+  description:
+    "Full Circle: PDF to KC Extraction - Convert PDFs to markdown using Datalab API, then extract Knowledge Components with multi-agent parallel processing and quality evaluation",
+})
+  .then(pdfConversionStep) // Step 0: Convert PDFs to Markdown
+  .then(loadCourseStep) // Step 1: Load converted markdown files
+  .parallel([
+    // Step 2: Parallel agent extraction
+    atomicityExtractionStep,
+    anchorsExtractionStep,
+    assessmentExtractionStep,
+    bloomExtractionStep,
+  ])
+  .then(masterConsolidationStep) // Step 3: Master consolidation
+  .parallel([
+    // Step 4: Parallel evaluation
+    faithfulnessEvaluationStep,
+    hallucinationEvaluationStep,
+    completenessEvaluationStep,
+    answerRelevancyEvaluationStep,
+  ])
+  .then(consolidateEvaluationStep) // Step 5: Consolidate evaluations
+  .then(generateOutputStep); // Step 6: Generate final output
+```
+
+#### **Key Features:**
+
+##### **1. PDF Conversion with Datalab API**
+
+**Integration**: Uses [Datalab's Marker API](https://documentation.datalab.to/) for high-quality PDF to Markdown conversion.
+
+```typescript
+const pdfConverterTool = createTool({
+  id: "pdf-converter",
+  description: "Convert PDF files to Markdown format using Datalab API",
+  execute: async ({ context }) => {
+    // Convert PDF to Markdown using Datalab's state-of-the-art models
+    const response = await fetch("https://api.datalab.to/v1/marker", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: formData, // PDF file + output format
+    });
+    return { markdownContent, outputFilePath, metadata };
+  },
+});
+```
+
+**Benefits**:
+
+- **High Accuracy**: Datalab's Marker system provides superior document processing
+- **Structure Preservation**: Maintains document layout, tables, and formatting
+- **Batch Processing**: Handles multiple PDFs automatically
+- **Metadata Tracking**: Records conversion times and success rates
+
+##### **2. Enhanced CLI with Multi-Workflow Support**
+
+**Usage Examples**:
+
+```bash
+# Run Full Circle workflow (default settings)
+npm run kc full-circle
+
+# Custom directories and settings
+npm run kc full-circle ./pdfs ./converted ./output google:gemini-2.5-pro "Physics Course"
+
+# Phase 3 workflow (existing)
+npm run kc phase3
+
+# Help and usage information
+npm run kc --help
+```
+
+**CLI Features**:
+
+- **Workflow Selection**: Choose between `phase3` and `full-circle`
+- **Parameter Validation**: Checks for required API keys
+- **Rich Output**: Detailed progress and results display
+- **Error Handling**: Helpful error messages and troubleshooting tips
+
+##### **3. Comprehensive Results and Analytics**
+
+**Enhanced Output Schema**:
+
+```typescript
+{
+  summary: {
+    totalKCs: number,
+    validKCs: number,
+    pdfConversions: number,        // NEW: PDF conversion count
+    outputFiles: string[]
+  },
+  extractionMetadata: {
+    model_used: string,
+    phase: string,
+    parallel_agents: number,
+    total_processing_time: number,
+    pdf_conversion_time: number,   // NEW: PDF processing time
+    agent_contributions: { ... }
+  },
+  courseMetadata: {
+    title: string,
+    totalFiles: number,
+    totalAnchors: number,
+    convertedPdfs: number         // NEW: Converted PDF count
+  },
+  evaluationResults: { ... }      // Same comprehensive evaluation as Phase 3
+}
+```
+
+#### **Prerequisites:**
+
+1. **Datalab API Key**: Required for PDF conversion
+
+   ```bash
+   export DATALAB_API_KEY="your-datalab-api-key"
+   ```
+
+2. **Google Gemini API Key**: Required for AI processing
+
+   ```bash
+   export GOOGLE_GENERATIVE_AI_API_KEY="your-gemini-api-key"
+   ```
+
+3. **Dependencies**: Install form-data for PDF uploads
+   ```bash
+   npm install form-data
+   ```
+
+#### **Directory Structure:**
+
+```
+src/mastra/Input/
+├── PDFs/                    # Place PDF files here
+│   ├── lecture1.pdf
+│   ├── textbook-ch1.pdf
+│   └── ...
+├── Converted/               # Auto-generated markdown files
+│   ├── lecture1.md
+│   ├── textbook-ch1.md
+│   └── ...
+└── ...
+```
+
+#### **Example Output:**
+
+```
+🚀 Running full-circle workflow...
+📄 PDF Directory: src/mastra/Input/PDFs
+📝 Markdown Directory: src/mastra/Input/Converted
+🔑 Datalab API: Configured
+
+🔄 Starting PDF conversion from src/mastra/Input/PDFs to src/mastra/Input/Converted
+📄 Found 3 PDF files to convert
+🔄 Converting: lecture1.pdf
+✅ Successfully converted: lecture1.pdf → lecture1.md
+🔄 Converting: textbook-ch1.pdf
+✅ Successfully converted: textbook-ch1.pdf → textbook-ch1.md
+🎉 PDF conversion completed: 3/3 files converted in 8420ms
+
+📚 Loading course materials from converted markdown files
+🤖 Running Atomicity Agent with google:gemini-2.5-pro
+🤖 Running Anchors Agent with google:gemini-2.5-pro
+🤖 Running Assessment Agent with google:gemini-2.5-pro
+🤖 Running Bloom Agent with google:gemini-2.5-pro
+🤖 Running Master Consolidator Agent with google:gemini-2.5-pro
+📊 Running faithfulness evaluation...
+📊 Running hallucination evaluation...
+📊 Running completeness evaluation...
+📊 Running answer relevancy evaluation...
+
+🎉 Workflow completed successfully!
+
+📊 Full Circle Results:
+  📄 PDFs Converted: 3
+  📚 Total KCs: 89
+  ✅ Valid KCs: 82
+  ⏱️ PDF Conversion Time: 8420ms
+  🏆 Quality Grade: A
+  📈 Overall Score: 87.4%
+  🎯 Quality: ✅ PASS (≥70%)
+
+📋 Evaluation Breakdown:
+  🎯 Faithfulness: 89.2%
+  🚫 Hallucination: 8.7% (lower is better)
+  📝 Completeness: 85.1%
+  🎪 Relevancy: 91.8%
+
+🤖 Agent Contributions:
+  ⚛️  Atomicity: 22 KCs
+  🔗 Anchors: 21 KCs
+  📝 Assessment: 24 KCs
+  🌸 Bloom: 22 KCs
+```
+
+---
+
+**Current Status**: Full Circle workflow complete with end-to-end PDF processing! 🎯  
+**Research Achievement**: Demonstrates complete document-to-knowledge pipeline with quality assurance  
+**Thesis Contribution**: Provides comprehensive technical documentation for advanced AI workflow orchestration with document processing integration
 
 **Available Workflows:**
 
 - `kc-multi-agent-phase1` - Basic single-agent extraction (Phase 1)
 - `kc-multi-agent-phase2` - Advanced parallel multi-agent processing (Phase 2)
 - `kc-multi-agent-phase3` - Complete system with quality evaluation (Phase 3) ⭐
+- `kc-extraction-full-circle` - End-to-end PDF to KC pipeline (Full Circle) 🎯

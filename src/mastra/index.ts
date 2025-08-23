@@ -3,6 +3,7 @@ import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
 import { kcMultiAgentPhase3Workflow } from './workflows/kc-multi-agent-phase3.workflow';
+import { kcExtractionFullCircleWorkflow } from './workflows/kc-extraction-full-circle.workflow';
 
 // Import specialized agent creators for Phase 3
 import { createMasterConsolidatorAgent } from './agents/master-consolidator.agent';
@@ -21,6 +22,7 @@ const bloomAgent = createBloomAgent('google:gemini-2.5-pro');
 export const mastra = new Mastra({
   workflows: { 
     kcMultiAgentPhase3Workflow,
+    kcExtractionFullCircleWorkflow,
   },
   agents: {
     masterConsolidator,
