@@ -501,7 +501,7 @@ const workflow = createWorkflow({...})
 const workflow = createWorkflow({
   id: "kc-multi-agent-phase3",
   description:
-    "Phase 3: Multi-agent parallel KC extraction with quality evaluation",
+    "Phase 3: Multi-agent parallel KC extraction with parallel quality evaluation",
 })
   .then(loadCourseStep) // Load all .md files + .anchors.json
   .parallel([
@@ -512,7 +512,14 @@ const workflow = createWorkflow({
     bloomExtractionStep, // Box 4: Bloom Agent
   ])
   .then(masterConsolidationStep) // All 4 boxes connect here
-  .then(evaluateKCsStep) // NEW: Quality evaluation step
+  .parallel([
+    // NEW: 4 evaluation metrics run in parallel
+    faithfulnessEvaluationStep, // Box 5: Faithfulness Evaluation
+    hallucinationEvaluationStep, // Box 6: Hallucination Evaluation
+    completenessEvaluationStep, // Box 7: Completeness Evaluation
+    answerRelevancyEvaluationStep, // Box 8: Answer Relevancy Evaluation
+  ])
+  .then(consolidateEvaluationStep) // All 4 evaluation boxes connect here
   .then(generateOutputStep) // Return KCs + evaluation results
   .commit();
 ```
@@ -917,9 +924,22 @@ const evaluateKCsStep = createStep({
 
 - Available in Mastra UI as `kc-multi-agent-phase3`
 - **Complete Quality Assessment**: Shows detailed evaluation results with reasoning
-- **Visual Flow**: `load-course` → 4 parallel boxes → `master-consolidation` → `evaluate-kcs` → `generate-output`
+- **Enhanced Visual Flow**:
+  ```
+  load-course →
+  [4 parallel agent boxes] →
+  master-consolidation →
+  [4 parallel evaluation boxes] →
+  consolidate-evaluation →
+  generate-output
+  ```
+- **Visual Evaluation Boxes**: Each evaluation metric appears as a separate box in the UI:
+  - `faithfulness-evaluation` - Faithfulness assessment
+  - `hallucination-evaluation` - Hallucination detection
+  - `completeness-evaluation` - Completeness analysis
+  - `answer-relevancy-evaluation` - Relevancy scoring
 - Processes files in `src/mastra/Input/` directory
-- Uses only Google Gemini for all agents and evaluation
+- Uses only Google Gemini for all agents and LLM-based evaluations
 - Returns KCs with comprehensive quality metrics and grades
 
 ### **Phase 4: PLANNED** ⏳

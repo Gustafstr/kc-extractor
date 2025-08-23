@@ -356,43 +356,271 @@ const masterConsolidationStep = createStep({
   },
 });
 
-// Step 4: NEW - KC Quality Evaluation
-const evaluateKCsStep = createStep({
-  id: 'evaluate-kcs',
-  description: 'Evaluate KC quality using Mastra built-in evaluation metrics',
-  inputSchema: z.object({
+// Common input schema for all evaluation steps
+const evaluationInputSchema = z.object({
+  finalKCs: KCArraySchema,
+  courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+  combinedContent: z.string(),
+  anchorList: z.array(z.string()),
+  extractionMetadata: z.object({
+    model_used: z.string(),
+    phase: z.string(),
+    parallel_agents: z.number(),
+    total_processing_time: z.number(),
+    agent_contributions: z.object({
+      atomicity: z.number(),
+      anchors: z.number(),
+      assessment: z.number(),
+      bloom: z.number(),
+    }),
+  }),
+});
+
+// Step 4a: Faithfulness Evaluation
+const faithfulnessEvaluationStep = createStep({
+  id: 'faithfulness-evaluation',
+  description: 'Evaluate KC faithfulness - how accurately KCs represent course content',
+  inputSchema: evaluationInputSchema,
+  outputSchema: z.object({
+    faithfulnessResult: z.object({
+      score: z.number(),
+      reason: z.string(),
+    }),
+    // Pass through all data for next steps
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
-    anchorList: z.array(z.string()),
-    extractionMetadata: z.object({
-      model_used: z.string(),
-      phase: z.string(),
-      parallel_agents: z.number(),
-      total_processing_time: z.number(),
-      agent_contributions: z.object({
-        atomicity: z.number(),
-        anchors: z.number(),
-        assessment: z.number(),
-        bloom: z.number(),
+    extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+  }),
+  execute: async ({ inputData }) => {
+    const { finalKCs, courseMetadata, combinedContent, extractionMetadata } = inputData;
+
+    // Create evaluation model
+    const evalModel = google(extractionMetadata.model_used.replace('google:', ''));
+
+    // Initialize faithfulness metric
+    const faithfulnessMetric = new FaithfulnessMetric(evalModel, {
+      context: [combinedContent],
+      scale: 1,
+    });
+
+    // Prepare KC content for evaluation
+    const kcSummary = finalKCs.map(kc => 
+      `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(', ')})`
+    ).join('\n');
+
+    const courseQuery = `Extract knowledge components from the course "${courseMetadata.title}"`;
+
+    // Run faithfulness evaluation
+    const faithfulnessResult = await faithfulnessMetric.measure(courseQuery, kcSummary);
+
+    return {
+      faithfulnessResult: {
+        score: faithfulnessResult.score,
+        reason: faithfulnessResult.info.reason,
+      },
+      finalKCs,
+      courseMetadata,
+      combinedContent,
+      extractionMetadata,
+    };
+  },
+});
+
+// Step 4b: Hallucination Evaluation
+const hallucinationEvaluationStep = createStep({
+  id: 'hallucination-evaluation',
+  description: 'Evaluate KC hallucination - detect fabricated information not in source',
+  inputSchema: evaluationInputSchema,
+  outputSchema: z.object({
+    hallucinationResult: z.object({
+      score: z.number(),
+      reason: z.string(),
+    }),
+    // Pass through all data for next steps
+    finalKCs: KCArraySchema,
+    courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+    combinedContent: z.string(),
+    extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+  }),
+  execute: async ({ inputData }) => {
+    const { finalKCs, courseMetadata, combinedContent, extractionMetadata } = inputData;
+
+    // Create evaluation model
+    const evalModel = google(extractionMetadata.model_used.replace('google:', ''));
+
+    // Initialize hallucination metric
+    const hallucinationMetric = new HallucinationMetric(evalModel, {
+      context: [combinedContent],
+      scale: 1,
+    });
+
+    // Prepare KC content for evaluation
+    const kcSummary = finalKCs.map(kc => 
+      `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(', ')})`
+    ).join('\n');
+
+    const courseQuery = `Extract knowledge components from the course "${courseMetadata.title}"`;
+
+    // Run hallucination evaluation
+    const hallucinationResult = await hallucinationMetric.measure(courseQuery, kcSummary);
+
+    return {
+      hallucinationResult: {
+        score: hallucinationResult.score,
+        reason: hallucinationResult.info.reason,
+      },
+      finalKCs,
+      courseMetadata,
+      combinedContent,
+      extractionMetadata,
+    };
+  },
+});
+
+// Step 4c: Completeness Evaluation
+const completenessEvaluationStep = createStep({
+  id: 'completeness-evaluation',
+  description: 'Evaluate KC completeness - how thoroughly KCs cover key course concepts',
+  inputSchema: evaluationInputSchema,
+  outputSchema: z.object({
+    completenessResult: z.object({
+      score: z.number(),
+      info: z.any(),
+    }),
+    // Pass through all data for next steps
+    finalKCs: KCArraySchema,
+    courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+    combinedContent: z.string(),
+    extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+  }),
+  execute: async ({ inputData }) => {
+    const { finalKCs, courseMetadata, combinedContent, extractionMetadata } = inputData;
+
+    // Initialize completeness metric (no LLM needed)
+    const completenessMetric = new CompletenessMetric();
+
+    // Prepare KC content for evaluation
+    const kcSummary = finalKCs.map(kc => 
+      `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(', ')})`
+    ).join('\n');
+
+    // Run completeness evaluation (note: different input order)
+    const completenessResult = await completenessMetric.measure(combinedContent, kcSummary);
+
+    return {
+      completenessResult: {
+        score: completenessResult.score,
+        info: completenessResult.info,
+      },
+      finalKCs,
+      courseMetadata,
+      combinedContent,
+      extractionMetadata,
+    };
+  },
+});
+
+// Step 4d: Answer Relevancy Evaluation
+const answerRelevancyEvaluationStep = createStep({
+  id: 'answer-relevancy-evaluation',
+  description: 'Evaluate KC relevancy - how well KCs address course learning objectives',
+  inputSchema: evaluationInputSchema,
+  outputSchema: z.object({
+    answerRelevancyResult: z.object({
+      score: z.number(),
+      reason: z.string(),
+    }),
+    // Pass through all data for next steps
+    finalKCs: KCArraySchema,
+    courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+    combinedContent: z.string(),
+    extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+  }),
+  execute: async ({ inputData }) => {
+    const { finalKCs, courseMetadata, combinedContent, extractionMetadata } = inputData;
+
+    // Create evaluation model
+    const evalModel = google(extractionMetadata.model_used.replace('google:', ''));
+
+    // Initialize answer relevancy metric
+    const answerRelevancyMetric = new AnswerRelevancyMetric(evalModel, {
+      scale: 1,
+    });
+
+    // Prepare KC content for evaluation
+    const kcSummary = finalKCs.map(kc => 
+      `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(', ')})`
+    ).join('\n');
+
+    const courseQuery = `Extract knowledge components from the course "${courseMetadata.title}"`;
+
+    // Run answer relevancy evaluation
+    const answerRelevancyResult = await answerRelevancyMetric.measure(courseQuery, kcSummary);
+
+    return {
+      answerRelevancyResult: {
+        score: answerRelevancyResult.score,
+        reason: answerRelevancyResult.info.reason,
+      },
+      finalKCs,
+      courseMetadata,
+      combinedContent,
+      extractionMetadata,
+    };
+  },
+});
+
+// Step 5: Consolidate Evaluation Results
+const consolidateEvaluationStep = createStep({
+  id: 'consolidate-evaluation',
+  description: 'Combine all evaluation results and calculate overall quality score',
+  inputSchema: z.object({
+    'faithfulness-evaluation': z.object({
+      faithfulnessResult: z.object({
+        score: z.number(),
+        reason: z.string(),
       }),
+      finalKCs: KCArraySchema,
+      courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+      combinedContent: z.string(),
+      extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+    }),
+    'hallucination-evaluation': z.object({
+      hallucinationResult: z.object({
+        score: z.number(),
+        reason: z.string(),
+      }),
+      finalKCs: KCArraySchema,
+      courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+      combinedContent: z.string(),
+      extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+    }),
+    'completeness-evaluation': z.object({
+      completenessResult: z.object({
+        score: z.number(),
+        info: z.any(),
+      }),
+      finalKCs: KCArraySchema,
+      courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+      combinedContent: z.string(),
+      extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
+    }),
+    'answer-relevancy-evaluation': z.object({
+      answerRelevancyResult: z.object({
+        score: z.number(),
+        reason: z.string(),
+      }),
+      finalKCs: KCArraySchema,
+      courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
+      combinedContent: z.string(),
+      extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
     }),
   }),
   outputSchema: z.object({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
-    extractionMetadata: z.object({
-      model_used: z.string(),
-      phase: z.string(),
-      parallel_agents: z.number(),
-      total_processing_time: z.number(),
-      agent_contributions: z.object({
-        atomicity: z.number(),
-        anchors: z.number(),
-        assessment: z.number(),
-        bloom: z.number(),
-      }),
-    }),
+    extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
     evaluationResults: z.object({
       faithfulness: z.object({
         score: z.number(),
@@ -418,45 +646,14 @@ const evaluateKCsStep = createStep({
     }),
   }),
   execute: async ({ inputData }) => {
-    const { finalKCs, courseMetadata, combinedContent, anchorList, extractionMetadata } = inputData;
+    // Extract results from all parallel evaluation steps
+    const faithfulnessResult = inputData['faithfulness-evaluation'].faithfulnessResult;
+    const hallucinationResult = inputData['hallucination-evaluation'].hallucinationResult;
+    const completenessResult = inputData['completeness-evaluation'].completenessResult;
+    const answerRelevancyResult = inputData['answer-relevancy-evaluation'].answerRelevancyResult;
 
-    // Create evaluation model (same as extraction model)
-    const evalModel = google(extractionMetadata.model_used.replace('google:', ''));
-
-    // Prepare context for evaluation (course content as context)
-    const contextChunks = [combinedContent];
-
-    // Initialize evaluation metrics
-    const faithfulnessMetric = new FaithfulnessMetric(evalModel, {
-      context: contextChunks,
-      scale: 1,
-    });
-
-    const hallucinationMetric = new HallucinationMetric(evalModel, {
-      context: contextChunks,
-      scale: 1,
-    });
-
-    const completenessMetric = new CompletenessMetric();
-
-    const answerRelevancyMetric = new AnswerRelevancyMetric(evalModel, {
-      scale: 1,
-    });
-
-    // Prepare KC content for evaluation
-    const kcSummary = finalKCs.map(kc => 
-      `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(', ')})`
-    ).join('\n');
-
-    const courseQuery = `Extract knowledge components from the course "${courseMetadata.title}"`;
-
-    // Run evaluations
-    const [faithfulnessResult, hallucinationResult, completenessResult, answerRelevancyResult] = await Promise.all([
-      faithfulnessMetric.measure(courseQuery, kcSummary),
-      hallucinationMetric.measure(courseQuery, kcSummary),
-      completenessMetric.measure(combinedContent, kcSummary),
-      answerRelevancyMetric.measure(courseQuery, kcSummary),
-    ]);
+    // Get metadata from first result (all should be the same)
+    const { finalKCs, courseMetadata, extractionMetadata } = inputData['faithfulness-evaluation'];
 
     // Calculate overall quality score (average of all metrics)
     // Note: Hallucination is inverted (lower is better), so we use (1 - score)
@@ -482,22 +679,10 @@ const evaluateKCsStep = createStep({
       courseMetadata,
       extractionMetadata,
       evaluationResults: {
-        faithfulness: {
-          score: faithfulnessResult.score,
-          reason: faithfulnessResult.info.reason,
-        },
-        hallucination: {
-          score: hallucinationResult.score,
-          reason: hallucinationResult.info.reason,
-        },
-        completeness: {
-          score: completenessResult.score,
-          info: completenessResult.info,
-        },
-        answerRelevancy: {
-          score: answerRelevancyResult.score,
-          reason: answerRelevancyResult.info.reason,
-        },
+        faithfulness: faithfulnessResult,
+        hallucination: hallucinationResult,
+        completeness: completenessResult,
+        answerRelevancy: answerRelevancyResult,
         overallQuality: {
           score: overallScore,
           grade,
@@ -570,10 +755,10 @@ const generateOutputStep = createStep({
   },
 });
 
-// Create the Phase 3 workflow with evaluation
+// Create the Phase 3 workflow with parallel evaluation
 const workflow = createWorkflow({
   id: 'kc-multi-agent-phase3',
-  description: 'Phase 3: Multi-agent parallel KC extraction with quality evaluation',
+  description: 'Phase 3: Multi-agent parallel KC extraction with parallel quality evaluation',
   inputSchema,
   outputSchema,
 })
@@ -585,7 +770,13 @@ const workflow = createWorkflow({
     bloomExtractionStep,
   ])
   .then(masterConsolidationStep)
-  .then(evaluateKCsStep)  // NEW: Evaluation step
+  .parallel([  // NEW: Parallel evaluation steps
+    faithfulnessEvaluationStep,
+    hallucinationEvaluationStep,
+    completenessEvaluationStep,
+    answerRelevancyEvaluationStep,
+  ])
+  .then(consolidateEvaluationStep)  // NEW: Consolidate evaluation results
   .then(generateOutputStep);
 
 workflow.commit();
