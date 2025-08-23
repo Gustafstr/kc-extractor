@@ -27,11 +27,41 @@ ASSESSMENT TYPES:
 - Practical tasks for application skills
 - Analysis questions for higher-order thinking
 
-QUALITY STANDARDS:
-- Good ✅ "List three benefits of workplace diversity" (testable, specific)
-- Good ✅ "Explain how bias affects hiring decisions" (measurable outcome)
-- Weak ❌ "Understand diversity concepts" (too vague to assess)
-- Weak ❌ "Appreciate cultural differences" (not measurable)
+QUALITY STANDARDS WITH EXAMPLES:
+
+**❌ BAD EXAMPLES:**
+- KC: "Understand diversity concepts"
+  Assessment: "Do you understand diversity?"
+  Problem: Vague verb, unmeasurable, yes/no question
+
+- KC: "Appreciate cultural differences"
+  Assessment: "How much do you appreciate other cultures?"
+  Problem: Subjective, not testable, measures attitude not knowledge
+
+- KC: "Know about performance management"
+  Assessment: "What do you know about performance management?"
+  Problem: Too broad, open-ended, no specific criteria
+
+- KC: "Be aware of workplace bias"
+  Assessment: "Are you aware of bias?"
+  Problem: Binary question, doesn't test actual knowledge
+
+**✅ GOOD EXAMPLES:**
+- KC: "List three benefits of workplace diversity"
+  Assessment: "Name three specific benefits that workplace diversity brings to organizations."
+  Strength: Specific number, clear action verb, measurable outcome
+
+- KC: "Explain how unconscious bias affects hiring decisions"
+  Assessment: "Describe two ways unconscious bias can influence hiring decisions and provide examples."
+  Strength: Clear explanation task, specific examples required
+
+- KC: "Identify steps in the performance review process"
+  Assessment: "List the five main steps in conducting a performance review in chronological order."
+  Strength: Sequential knowledge, specific count, clear criteria
+
+- KC: "Calculate employee turnover rate"
+  Assessment: "Given 20 departures from 100 employees, calculate the annual turnover rate."
+  Strength: Practical application, specific calculation, measurable skill
 
 FOCUS AREAS:
 - Prioritize KCs that translate directly to test questions
@@ -39,7 +69,7 @@ FOCUS AREAS:
 - Use action verbs that indicate measurable performance
 - Consider different assessment formats (MC, short answer, practical)
 
-Extract 8-12 highly testable KCs with concrete assessment examples.`,
+Extract all highly testable KCs with concrete assessment examples. Generate as many assessable KCs as you can identify, ensuring each has a realistic test question.`,
     model: google(model.replace('google:', '')),
   });
 }
@@ -63,11 +93,13 @@ SPECIALIZATION: Focus on ASSESSMENT - testable outcomes with concrete examples.
 COURSE CONTENT:
 ${combinedContent}
 
-Extract 8-12 testable Knowledge Components. Each KC must:
+Extract all testable Knowledge Components that meet the criteria. Each KC must:
 - Be easily assessable with 1-3 test items
 - Include a specific, realistic example assessment (≤120 chars)
 - Use actionable verbs that indicate measurable performance
 - Be student-friendly and clearly worded
+
+Generate as many assessable KCs as you can identify, ensuring comprehensive coverage of testable content.
 
 Return a JSON array following this structure:
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[

@@ -42,11 +42,36 @@ STANDARDIZATION:
 - Maintain consistent module naming
 - Apply proper Bloom taxonomy levels
 
+CONSOLIDATION EXAMPLES:
+
+**❌ BAD CONSOLIDATION:**
+Agent A: "Define workplace diversity"
+Agent B: "Explain what diversity means in organizations" 
+Agent C: "Understand diversity concepts"
+Bad Output: Keeps all three (redundant, different quality levels)
+
+Agent A: "Create and implement diversity training"
+Agent B: "Design training programs"
+Bad Output: "Create and implement diversity training" (compound, not atomic)
+
+**✅ GOOD CONSOLIDATION:**
+Agent A: "Define workplace diversity" (strong anchor: diversity_def_001)
+Agent B: "Explain what diversity means" (weak anchor: intro_002)
+Agent C: "Understand diversity concepts" (vague verb)
+Good Output: "Define workplace diversity" (best evidence + clearest verb)
+
+Agent A: "Create diversity training programs" 
+Agent B: "Implement training initiatives"
+Good Output: Split into:
+- "Design diversity training programs" (Create level)
+- "Implement diversity training programs" (Apply level)
+
 OUTPUT REQUIREMENTS:
-- 15-25 final KCs (comprehensive but not overwhelming)
+- Generate the optimal number of final KCs for comprehensive course coverage
 - No duplicates or significant overlaps
 - All KCs must be atomic, evidence-based, testable, and properly classified
-- Balanced coverage of course content`,
+- Balanced coverage of course content
+- Quality over quantity - prefer fewer excellent KCs than many mediocre ones`,
     model: google(model.replace('google:', '')),
   });
 }
@@ -97,7 +122,7 @@ QUALITY CRITERIA:
 - Properly classified (accurate Bloom levels)
 - Comprehensive (covers key course concepts)
 
-Return 15-25 final Knowledge Components as a JSON array:
+Return the optimal number of final Knowledge Components as a JSON array (focus on quality and comprehensive coverage):
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[
   {
     "kc_id": "KC-01-001",

@@ -20,6 +20,7 @@ const inputSchema = z.object({
   dir: z.string().default('src/mastra/Input'),
   outDir: z.string().default('out'),
   model: z.string().default('google:gemini-2.5-pro'),
+  courseTitle: z.string().default('Course Knowledge Components'),
 });
 
 // Enhanced output schema with evaluation results
@@ -94,6 +95,7 @@ const loadCourseStep = createStep({
   outputSchema: courseLoaderOutputSchema.extend({
     outDir: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   execute: async ({ inputData, mastra }) => {
     const result = await courseLoaderTool.execute({
@@ -106,6 +108,7 @@ const loadCourseStep = createStep({
       ...result,
       outDir: inputData.outDir,
       model: inputData.model,
+      courseTitle: inputData.courseTitle,
     };
   },
 });
@@ -117,6 +120,7 @@ const atomicityExtractionStep = createStep({
   inputSchema: courseLoaderOutputSchema.extend({
     outDir: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   outputSchema: z.object({
     atomicityKCs: KCArraySchema,
@@ -124,12 +128,13 @@ const atomicityExtractionStep = createStep({
     anchorList: z.array(z.string()),
     combinedContent: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   execute: async ({ inputData }) => {
-    const { combinedContent, anchorList, courseMetadata, model } = inputData;
+    const { combinedContent, anchorList, courseMetadata, model, courseTitle } = inputData;
 
     const atomicityAgent = createAtomicityAgent(model);
-    const atomicityPrompt = createAtomicityPrompt(combinedContent, anchorList, courseMetadata.title);
+    const atomicityPrompt = createAtomicityPrompt(combinedContent, anchorList, courseTitle);
 
     const atomicityResult = await atomicityAgent.generate(
       [{ role: 'user', content: atomicityPrompt }],
@@ -142,6 +147,7 @@ const atomicityExtractionStep = createStep({
       anchorList,
       combinedContent,
       model,
+      courseTitle,
     };
   },
 });
@@ -153,6 +159,7 @@ const anchorsExtractionStep = createStep({
   inputSchema: courseLoaderOutputSchema.extend({
     outDir: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   outputSchema: z.object({
     anchorsKCs: KCArraySchema,
@@ -160,12 +167,13 @@ const anchorsExtractionStep = createStep({
     anchorList: z.array(z.string()),
     combinedContent: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   execute: async ({ inputData }) => {
-    const { combinedContent, anchorList, courseMetadata, model } = inputData;
+    const { combinedContent, anchorList, courseMetadata, model, courseTitle } = inputData;
 
     const anchorsAgent = createAnchorsAgent(model);
-    const anchorsPrompt = createAnchorsPrompt(combinedContent, anchorList, courseMetadata.title);
+    const anchorsPrompt = createAnchorsPrompt(combinedContent, anchorList, courseTitle);
 
     const anchorsResult = await anchorsAgent.generate(
       [{ role: 'user', content: anchorsPrompt }],
@@ -178,6 +186,7 @@ const anchorsExtractionStep = createStep({
       anchorList,
       combinedContent,
       model,
+      courseTitle,
     };
   },
 });
@@ -189,6 +198,7 @@ const assessmentExtractionStep = createStep({
   inputSchema: courseLoaderOutputSchema.extend({
     outDir: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   outputSchema: z.object({
     assessmentKCs: KCArraySchema,
@@ -196,12 +206,13 @@ const assessmentExtractionStep = createStep({
     anchorList: z.array(z.string()),
     combinedContent: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   execute: async ({ inputData }) => {
-    const { combinedContent, anchorList, courseMetadata, model } = inputData;
+    const { combinedContent, anchorList, courseMetadata, model, courseTitle } = inputData;
 
     const assessmentAgent = createAssessmentAgent(model);
-    const assessmentPrompt = createAssessmentPrompt(combinedContent, anchorList, courseMetadata.title);
+    const assessmentPrompt = createAssessmentPrompt(combinedContent, anchorList, courseTitle);
 
     const assessmentResult = await assessmentAgent.generate(
       [{ role: 'user', content: assessmentPrompt }],
@@ -214,6 +225,7 @@ const assessmentExtractionStep = createStep({
       anchorList,
       combinedContent,
       model,
+      courseTitle,
     };
   },
 });
@@ -225,6 +237,7 @@ const bloomExtractionStep = createStep({
   inputSchema: courseLoaderOutputSchema.extend({
     outDir: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   outputSchema: z.object({
     bloomKCs: KCArraySchema,
@@ -232,12 +245,13 @@ const bloomExtractionStep = createStep({
     anchorList: z.array(z.string()),
     combinedContent: z.string(),
     model: z.string(),
+    courseTitle: z.string(),
   }),
   execute: async ({ inputData }) => {
-    const { combinedContent, anchorList, courseMetadata, model } = inputData;
+    const { combinedContent, anchorList, courseMetadata, model, courseTitle } = inputData;
 
     const bloomAgent = createBloomAgent(model);
-    const bloomPrompt = createBloomPrompt(combinedContent, anchorList, courseMetadata.title);
+    const bloomPrompt = createBloomPrompt(combinedContent, anchorList, courseTitle);
 
     const bloomResult = await bloomAgent.generate(
       [{ role: 'user', content: bloomPrompt }],
@@ -250,6 +264,7 @@ const bloomExtractionStep = createStep({
       anchorList,
       combinedContent,
       model,
+      courseTitle,
     };
   },
 });
@@ -265,6 +280,7 @@ const masterConsolidationStep = createStep({
       anchorList: z.array(z.string()),
       combinedContent: z.string(),
       model: z.string(),
+      courseTitle: z.string(),
     }),
     'anchors-extraction': z.object({
       anchorsKCs: KCArraySchema,
@@ -272,6 +288,7 @@ const masterConsolidationStep = createStep({
       anchorList: z.array(z.string()),
       combinedContent: z.string(),
       model: z.string(),
+      courseTitle: z.string(),
     }),
     'assessment-extraction': z.object({
       assessmentKCs: KCArraySchema,
@@ -279,6 +296,7 @@ const masterConsolidationStep = createStep({
       anchorList: z.array(z.string()),
       combinedContent: z.string(),
       model: z.string(),
+      courseTitle: z.string(),
     }),
     'bloom-extraction': z.object({
       bloomKCs: KCArraySchema,
@@ -286,6 +304,7 @@ const masterConsolidationStep = createStep({
       anchorList: z.array(z.string()),
       combinedContent: z.string(),
       model: z.string(),
+      courseTitle: z.string(),
     }),
   }),
   outputSchema: z.object({
@@ -314,7 +333,7 @@ const masterConsolidationStep = createStep({
     const bloomKCs = inputData['bloom-extraction'].bloomKCs;
 
     // Get metadata from first result (all should be the same)
-    const { courseMetadata, anchorList, combinedContent, model } = inputData['atomicity-extraction'];
+    const { courseMetadata, anchorList, combinedContent, model, courseTitle } = inputData['atomicity-extraction'];
 
     // Create master consolidator agent
     const masterAgent = createMasterConsolidatorAgent(model);
@@ -324,7 +343,7 @@ const masterConsolidationStep = createStep({
       assessmentKCs,
       bloomKCs,
       anchorList,
-      courseMetadata.title
+      courseTitle
     );
 
     // Run master consolidation
@@ -340,6 +359,7 @@ const masterConsolidationStep = createStep({
       courseMetadata,
       combinedContent,
       anchorList,
+      courseTitle,
       extractionMetadata: {
         model_used: model,
         phase: 'Phase 3 - Multi-Agent with Quality Evaluation',
@@ -362,6 +382,7 @@ const evaluationInputSchema = z.object({
   courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
   combinedContent: z.string(),
   anchorList: z.array(z.string()),
+  courseTitle: z.string(),
   extractionMetadata: z.object({
     model_used: z.string(),
     phase: z.string(),
@@ -390,10 +411,11 @@ const faithfulnessEvaluationStep = createStep({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
+    courseTitle: z.string(),
     extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
   }),
   execute: async ({ inputData }) => {
-    const { finalKCs, courseMetadata, combinedContent, extractionMetadata } = inputData;
+    const { finalKCs, courseMetadata, combinedContent, extractionMetadata, courseTitle } = inputData;
 
     // Create evaluation model
     const evalModel = google(extractionMetadata.model_used.replace('google:', ''));
@@ -409,7 +431,7 @@ const faithfulnessEvaluationStep = createStep({
       `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(', ')})`
     ).join('\n');
 
-    const courseQuery = `Extract knowledge components from the course "${courseMetadata.title}"`;
+    const courseQuery = `Extract knowledge components from the course "${courseTitle}"`;
 
     // Run faithfulness evaluation
     const faithfulnessResult = await faithfulnessMetric.measure(courseQuery, kcSummary);
@@ -422,6 +444,7 @@ const faithfulnessEvaluationStep = createStep({
       finalKCs,
       courseMetadata,
       combinedContent,
+      courseTitle,
       extractionMetadata,
     };
   },
@@ -441,10 +464,11 @@ const hallucinationEvaluationStep = createStep({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
+    courseTitle: z.string(),
     extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
   }),
   execute: async ({ inputData }) => {
-    const { finalKCs, courseMetadata, combinedContent, extractionMetadata } = inputData;
+    const { finalKCs, courseMetadata, combinedContent, extractionMetadata, courseTitle } = inputData;
 
     // Create evaluation model
     const evalModel = google(extractionMetadata.model_used.replace('google:', ''));
@@ -460,7 +484,7 @@ const hallucinationEvaluationStep = createStep({
       `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(', ')})`
     ).join('\n');
 
-    const courseQuery = `Extract knowledge components from the course "${courseMetadata.title}"`;
+    const courseQuery = `Extract knowledge components from the course "${courseTitle}"`;
 
     // Run hallucination evaluation
     const hallucinationResult = await hallucinationMetric.measure(courseQuery, kcSummary);
@@ -473,6 +497,7 @@ const hallucinationEvaluationStep = createStep({
       finalKCs,
       courseMetadata,
       combinedContent,
+      courseTitle,
       extractionMetadata,
     };
   },
@@ -492,10 +517,11 @@ const completenessEvaluationStep = createStep({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
+    courseTitle: z.string(),
     extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
   }),
   execute: async ({ inputData }) => {
-    const { finalKCs, courseMetadata, combinedContent, extractionMetadata } = inputData;
+    const { finalKCs, courseMetadata, combinedContent, extractionMetadata, courseTitle } = inputData;
 
     // Initialize completeness metric (no LLM needed)
     const completenessMetric = new CompletenessMetric();
@@ -516,6 +542,7 @@ const completenessEvaluationStep = createStep({
       finalKCs,
       courseMetadata,
       combinedContent,
+      courseTitle,
       extractionMetadata,
     };
   },
@@ -535,10 +562,11 @@ const answerRelevancyEvaluationStep = createStep({
     finalKCs: KCArraySchema,
     courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
     combinedContent: z.string(),
+    courseTitle: z.string(),
     extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
   }),
   execute: async ({ inputData }) => {
-    const { finalKCs, courseMetadata, combinedContent, extractionMetadata } = inputData;
+    const { finalKCs, courseMetadata, combinedContent, extractionMetadata, courseTitle } = inputData;
 
     // Create evaluation model
     const evalModel = google(extractionMetadata.model_used.replace('google:', ''));
@@ -553,7 +581,7 @@ const answerRelevancyEvaluationStep = createStep({
       `${kc.label}: ${kc.definition} (Bloom: ${kc.bloom}, Anchors: ${kc.anchors.join(', ')})`
     ).join('\n');
 
-    const courseQuery = `Extract knowledge components from the course "${courseMetadata.title}"`;
+    const courseQuery = `Extract knowledge components from the course "${courseTitle}"`;
 
     // Run answer relevancy evaluation
     const answerRelevancyResult = await answerRelevancyMetric.measure(courseQuery, kcSummary);
@@ -566,6 +594,7 @@ const answerRelevancyEvaluationStep = createStep({
       finalKCs,
       courseMetadata,
       combinedContent,
+      courseTitle,
       extractionMetadata,
     };
   },
@@ -584,6 +613,7 @@ const consolidateEvaluationStep = createStep({
       finalKCs: KCArraySchema,
       courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
       combinedContent: z.string(),
+      courseTitle: z.string(),
       extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
     }),
     'hallucination-evaluation': z.object({
@@ -594,6 +624,7 @@ const consolidateEvaluationStep = createStep({
       finalKCs: KCArraySchema,
       courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
       combinedContent: z.string(),
+      courseTitle: z.string(),
       extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
     }),
     'completeness-evaluation': z.object({
@@ -604,6 +635,7 @@ const consolidateEvaluationStep = createStep({
       finalKCs: KCArraySchema,
       courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
       combinedContent: z.string(),
+      courseTitle: z.string(),
       extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
     }),
     'answer-relevancy-evaluation': z.object({
@@ -614,6 +646,7 @@ const consolidateEvaluationStep = createStep({
       finalKCs: KCArraySchema,
       courseMetadata: courseLoaderOutputSchema.shape.courseMetadata,
       combinedContent: z.string(),
+      courseTitle: z.string(),
       extractionMetadata: evaluationInputSchema.shape.extractionMetadata,
     }),
   }),

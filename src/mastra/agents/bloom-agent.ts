@@ -28,12 +28,42 @@ VERB ALIGNMENT RULES:
 - Avoid vague verbs like "know" or "understand" in labels
 - Ensure cognitive complexity matches the course level
 
-QUALITY STANDARDS:
-- Good ✅ "Define workplace diversity" → Remember
-- Good ✅ "Analyze the impact of bias on hiring" → Analyze
-- Good ✅ "Design an inclusive training program" → Create
-- Wrong ❌ "List diversity benefits" → Analyze (should be Remember)
-- Wrong ❌ "Create a definition" → Remember (should be Create)
+QUALITY STANDARDS WITH EXAMPLES:
+
+**❌ BAD EXAMPLES:**
+- KC: "List diversity benefits" → Classified as Analyze
+  Problem: Listing is a Remember activity, not analysis
+
+- KC: "Create a definition of bias" → Classified as Remember  
+  Problem: Creating requires synthesis, should be Create level
+
+- KC: "Know performance metrics" → Classified as Apply
+  Problem: "Know" is vague, not actionable, wrong level
+
+- KC: "Understand conflict resolution" → Classified as Evaluate
+  Problem: "Understand" typically maps to Understand level, not Evaluate
+
+- KC: "Think about diversity" → Classified as Analyze
+  Problem: "Think" is too vague, not measurable
+
+**✅ GOOD EXAMPLES:**
+- KC: "Define workplace diversity" → Remember
+  Strength: "Define" aligns with Remember (recall factual knowledge)
+
+- KC: "Explain the benefits of diversity" → Understand  
+  Strength: "Explain" requires comprehension and interpretation
+
+- KC: "Apply conflict resolution techniques in scenarios" → Apply
+  Strength: "Apply" uses knowledge in new situations
+
+- KC: "Analyze the effectiveness of hiring practices" → Analyze
+  Strength: "Analyze" breaks down and examines components
+
+- KC: "Evaluate the success of diversity initiatives" → Evaluate
+  Strength: "Evaluate" makes judgments based on criteria
+
+- KC: "Design an inclusive workplace policy" → Create
+  Strength: "Design" synthesizes elements into new structure
 
 FOCUS AREAS:
 - Ensure verb-taxonomy alignment is precise
@@ -41,7 +71,7 @@ FOCUS AREAS:
 - Create a balanced distribution across Bloom levels
 - Prioritize higher-order thinking when content supports it
 
-Extract 8-12 KCs with accurate Bloom taxonomy classification and verb alignment.`,
+Extract all KCs with accurate Bloom taxonomy classification and verb alignment. Generate as many properly classified KCs as needed to cover the course content across appropriate cognitive levels.`,
     model: google(model.replace('google:', '')),
   });
 }
@@ -73,11 +103,13 @@ BLOOM LEVEL REFERENCE:
 COURSE CONTENT:
 ${combinedContent}
 
-Extract 8-12 Knowledge Components with precise Bloom classification. Each KC must:
+Extract all Knowledge Components with precise Bloom classification. Each KC must:
 - Use action verbs that align with the assigned Bloom level
 - Have cognitive complexity appropriate for the course
 - Show accurate verb-taxonomy mapping
 - Represent a balanced distribution across Bloom levels when possible
+
+Generate as many properly classified KCs as needed for comprehensive cognitive coverage.
 
 Return a JSON array following this structure:
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[

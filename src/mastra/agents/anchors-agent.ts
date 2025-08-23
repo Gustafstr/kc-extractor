@@ -21,10 +21,33 @@ EVIDENCE RULES:
 4. **No Speculation**: Never create KCs based on implied or inferred knowledge
 5. **Anchor Validation**: Only use anchor IDs from the provided list
 
-QUALITY STANDARDS:
-- Strong ✅ KC cites anchor that explicitly explains the concept
-- Weak ❌ KC cites anchor that only mentions the topic tangentially
-- Invalid ❌ KC uses anchor IDs not in the provided list
+QUALITY STANDARDS WITH EXAMPLES:
+
+**❌ BAD EXAMPLES:**
+- KC: "Implement diversity training programs" 
+  Anchor: "diversity_intro_001" (only mentions diversity exists, no training details)
+  Problem: Weak evidence - anchor doesn't support implementation details
+
+- KC: "Calculate employee turnover rates"
+  Anchor: "invalid_anchor_999" (not in provided list)
+  Problem: Invalid anchor ID
+
+- KC: "Understand cultural sensitivity"
+  Anchor: "bias_types_003" (discusses bias types, not cultural sensitivity)
+  Problem: Mismatched evidence - anchor doesn't support the KC
+
+**✅ GOOD EXAMPLES:**
+- KC: "Define workplace diversity"
+  Anchor: "diversity_definition_001" (contains explicit definition of workplace diversity)
+  Evidence: Strong - anchor directly explains the concept
+
+- KC: "List types of unconscious bias"
+  Anchor: "bias_types_003" (enumerates specific bias types with examples)
+  Evidence: Strong - anchor provides comprehensive list
+
+- KC: "Identify steps in performance review process"
+  Anchor: "performance_process_007" (outlines step-by-step review procedure)
+  Evidence: Strong - anchor contains detailed process information
 
 EVIDENCE ASSESSMENT:
 - Does the anchor text directly explain this concept?
@@ -37,7 +60,7 @@ FOCUS AREAS:
 - Prefer fewer, well-supported KCs over many weakly-supported ones
 - Validate all anchor IDs against the provided list
 
-Extract 8-12 evidence-based KCs with the strongest possible anchor support.`,
+Extract all evidence-based KCs that have strong anchor support. Generate as many KCs as you can find with solid evidence, prioritizing quality of evidence over quantity.`,
     model: google(model.replace('google:', '')),
   });
 }
@@ -61,11 +84,13 @@ SPECIALIZATION: Focus on EVIDENCE - strong anchor support for every KC.
 COURSE CONTENT:
 ${combinedContent}
 
-Extract 8-12 evidence-based Knowledge Components. Each KC must:
+Extract all evidence-based Knowledge Components with strong anchor support. Each KC must:
 - Cite 1-2 anchors that DIRECTLY support the concept
 - Be traceable to explicit content in the cited anchors
 - Use only anchor IDs from the provided list above
 - Have clear, direct evidence (no inference or speculation)
+
+Generate as many well-supported KCs as you can identify, prioritizing evidence quality over quantity.
 
 Return a JSON array following this structure:
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[

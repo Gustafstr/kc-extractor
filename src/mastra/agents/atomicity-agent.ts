@@ -21,11 +21,21 @@ ATOMICITY RULES:
 4. **Unique Phrasing**: Eliminate duplicates and synonymous KCs - prefer the most precise wording
 5. **Assessable**: Each KC must be testable with 1-3 assessment items
 
-QUALITY STANDARDS:
-- Too broad ❌ "Data Structures and Algorithms"
-- Too compound ❌ "Create and debug Python functions"
-- Good ✅ "Write a Python function with parameters"
-- Good ✅ "Debug syntax errors in Python code"
+QUALITY STANDARDS WITH EXAMPLES:
+
+**❌ BAD EXAMPLES:**
+- "Data Structures and Algorithms" (Too broad - covers multiple concepts)
+- "Create and debug Python functions" (Compound - contains two separate skills)
+- "Understand diversity and inclusion principles" (Vague verb + compound concept)
+- "Know about workplace bias" (Non-actionable verb)
+- "Learn conflict resolution techniques" (Too general)
+
+**✅ GOOD EXAMPLES:**
+- "Define workplace diversity" (Single concept, clear verb, assessable)
+- "Identify types of unconscious bias" (Atomic, specific, measurable)
+- "List steps in the hiring process" (Clear action, single concept)
+- "Explain the purpose of performance reviews" (One concept, actionable verb)
+- "Describe active listening techniques" (Specific skill, single focus)
 
 FOCUS AREAS:
 - Split complex learning objectives into atomic components
@@ -33,7 +43,7 @@ FOCUS AREAS:
 - Eliminate redundant or overlapping concepts
 - Prioritize precision over comprehensiveness
 
-Extract 8-12 highly atomic, unique KCs that represent the most fundamental learning components.`,
+Extract all atomic, unique KCs that represent the fundamental learning components. Generate as many KCs as necessary to comprehensively cover the course content while maintaining atomicity.`,
     model: google(model.replace('google:', '')),
   });
 }
@@ -57,11 +67,13 @@ SPECIALIZATION: Focus on ATOMICITY - single concepts only, no compound ideas.
 COURSE CONTENT:
 ${combinedContent}
 
-Extract 8-12 atomic Knowledge Components. Each KC must be:
+Extract all atomic Knowledge Components that meet the criteria. Each KC must be:
 - A single, testable concept (not compound)
 - Unique (no duplicates or synonyms)
 - Action-oriented with clear verbs
 - Directly supported by course content
+
+Generate as many KCs as necessary for comprehensive coverage while maintaining atomicity.
 
 Return a JSON array following this structure:
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[
