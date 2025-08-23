@@ -5,13 +5,15 @@ import { LibSQLStore } from '@mastra/libsql';
 import { kcSimpleWorkflow } from './workflows/kc-simple.workflow';
 import { kcMultiAgentWorkflow } from './workflows/kc-multi-agent.workflow';
 import { kcMultiAgentPhase2Workflow } from './workflows/kc-multi-agent-phase2.workflow';
+import { kcMultiAgentPhase3Workflow } from './workflows/kc-multi-agent-phase3.workflow';
 import { testWorkflow } from './workflows/test-extraction.workflow';
 
 export const mastra = new Mastra({
   workflows: { 
     kcSimpleWorkflow, 
     kcMultiAgentWorkflow, 
-    kcMultiAgentPhase2Workflow, 
+    kcMultiAgentPhase2Workflow,
+    kcMultiAgentPhase3Workflow,
     testWorkflow 
   },
   agents: {},
