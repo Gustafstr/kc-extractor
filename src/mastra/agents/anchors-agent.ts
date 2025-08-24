@@ -84,7 +84,7 @@ SPECIALIZATION: Focus on EVIDENCE - strong anchor support for every KC.
 COURSE CONTENT:
 ${combinedContent}
 
-Extract all evidence-based Knowledge Components with strong anchor support. Each KC must:
+Extract all evidence-based Knowledge Components with strong anchor support (Maximum 35 KCs). Each KC must:
 - Cite 1-2 anchors that DIRECTLY support the concept
 - Be traceable to explicit content in the cited anchors
 - Use only anchor IDs from the provided list above

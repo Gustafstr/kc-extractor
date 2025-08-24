@@ -17,7 +17,8 @@ export const evaluationReportExportTool = createTool({
       convertedPdfs: z.number().optional(),
     }),
     extractionMetadata: z.object({
-      model_used: z.string(),
+      extraction_model: z.string(),
+      evaluation_model: z.string(),
       phase: z.string(),
       parallel_agents: z.number(),
       total_processing_time: z.number(),
@@ -37,10 +38,6 @@ export const evaluationReportExportTool = createTool({
       hallucination: z.object({
         score: z.number(),
         reason: z.string(),
-      }),
-      completeness: z.object({
-        score: z.number(),
-        info: z.any(),
       }),
       answerRelevancy: z.object({
         score: z.number(),
@@ -71,7 +68,7 @@ export const evaluationReportExportTool = createTool({
       outputPath 
     } = context;
 
-    const ExcelJS = await import('exceljs');
+    const ExcelJS = (await import('exceljs')).default;
     const fs = await import('fs');
     const path = await import('path');
 
@@ -140,7 +137,8 @@ function createQualitySummarySheet(sheet: any, evaluationResults: any, courseMet
     ['Course Name', courseTitle, ''],
     ['Total Documents', courseMetadata.totalFiles, ''],
     ['Total KCs Generated', totalKCs, ''],
-    ['Model Used', extractionMetadata.model_used, ''],
+    ['Extraction Model', extractionMetadata.extraction_model, ''],
+    ['Evaluation Model', extractionMetadata.evaluation_model, ''],
     ['Processing Time', `${extractionMetadata.total_processing_time || 'N/A'}ms`, ''],
   ];
   
@@ -180,7 +178,6 @@ function createQualitySummarySheet(sheet: any, evaluationResults: any, courseMet
   const metrics = [
     ['Faithfulness', evaluationResults.faithfulness.score.toFixed(3), 'How accurately KCs represent course content'],
     ['Hallucination', evaluationResults.hallucination.score.toFixed(3), 'Presence of fabricated information (lower is better)'],
-    ['Completeness', evaluationResults.completeness.score.toFixed(3), 'Coverage of key course concepts'],
     ['Answer Relevancy', evaluationResults.answerRelevancy.score.toFixed(3), 'Relevance to learning objectives'],
   ];
   
@@ -257,7 +254,6 @@ function createDetailedMetricsSheet(sheet: any, evaluationResults: any) {
   const detailedMetrics = [
     ['Faithfulness', evaluationResults.faithfulness.score.toFixed(3), evaluationResults.faithfulness.reason],
     ['Hallucination', evaluationResults.hallucination.score.toFixed(3), evaluationResults.hallucination.reason],
-    ['Completeness', evaluationResults.completeness.score.toFixed(3), JSON.stringify(evaluationResults.completeness.info, null, 2)],
     ['Answer Relevancy', evaluationResults.answerRelevancy.score.toFixed(3), evaluationResults.answerRelevancy.reason],
   ];
   
@@ -295,9 +291,7 @@ function createRecommendationsSheet(sheet: any, evaluationResults: any) {
     recommendations.push('⚠️ Hallucination Score High: KCs may contain fabricated information. Review extraction process and consider adding more explicit grounding to source material.');
   }
   
-  if (evaluationResults.completeness.score < 0.7) {
-    recommendations.push('📚 Completeness Score Low: Important course concepts may be missing. Consider expanding the extraction scope or reviewing course materials for coverage gaps.');
-  }
+
   
   if (evaluationResults.answerRelevancy.score < 0.7) {
     recommendations.push('🎯 Relevancy Score Low: KCs may not align well with learning objectives. Review course goals and refine KC extraction to focus on key learning outcomes.');

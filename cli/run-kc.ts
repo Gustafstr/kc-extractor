@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 import 'dotenv/config';
-import { kcMultiAgentPhase3Workflow } from '../src/mastra/workflows/kc-multi-agent-phase3.workflow';
 import { kcExtractionFullCircleWorkflow } from '../src/mastra/workflows/kc-extraction-full-circle.workflow';
 
 // Available workflows
 const workflows = {
-  'phase3': kcMultiAgentPhase3Workflow,
   'full-circle': kcExtractionFullCircleWorkflow,
 } as const;
 
@@ -58,7 +56,7 @@ async function main() {
     // Phase 3 workflow parameters
     const inDir = workflowArgs[0] || 'src/mastra/Input';
     const outDir = workflowArgs[1] || 'out';
-    const model = workflowArgs[2] || 'google:gemini-2.5-pro';
+    const model = workflowArgs[2] || 'gemini-2.5-flash';
     const courseTitle = workflowArgs[3] || 'Course Knowledge Components';
     
     inputData = { dir: inDir, outDir, model, courseTitle };
@@ -73,7 +71,7 @@ async function main() {
     const pdfDir = workflowArgs[0] || 'src/mastra/Input/PDFs';
     const markdownDir = workflowArgs[1] || 'src/mastra/Input/Converted';
     const outDir = workflowArgs[2] || 'out';
-    const model = workflowArgs[3] || 'google:gemini-2.5-pro';
+    const model = workflowArgs[3] || 'gemini-2.5-flash';
     const courseTitle = workflowArgs[4] || 'Course Knowledge Components';
     const datalabApiKey = workflowArgs[5] || process.env.DATALAB_API_KEY;
     

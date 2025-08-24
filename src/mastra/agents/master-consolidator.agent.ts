@@ -122,7 +122,7 @@ QUALITY CRITERIA:
 - Properly classified (accurate Bloom levels)
 - Comprehensive (covers key course concepts)
 
-Return the optimal number of final Knowledge Components as a JSON array (focus on quality and comprehensive coverage):
+Return the optimal number of final Knowledge Components as a JSON array (focus on quality and comprehensive coverage) (Maximum 35 KCs in total):
 ${JSON.stringify(KCArraySchema.parse([]), null, 2).replace('[]', `[
   {
     "kc_id": "KC-01-001",

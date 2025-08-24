@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
+    "test-evals": "tsx test-evaluations.ts",
     "dev": "mastra dev",
     "build": "mastra build",
     "start": "mastra start",

@@ -93,7 +93,7 @@ SPECIALIZATION: Focus on ASSESSMENT - testable outcomes with concrete examples.
 COURSE CONTENT:
 ${combinedContent}
 
-Extract all testable Knowledge Components that meet the criteria. Each KC must:
+Extract all testable Knowledge Components that meet the criteria (Maximum 35 KCs). Each KC must:
 - Be easily assessable with 1-3 test items
 - Include a specific, realistic example assessment (≤120 chars)
 - Use actionable verbs that indicate measurable performance

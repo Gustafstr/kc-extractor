@@ -2,7 +2,6 @@
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { kcMultiAgentPhase3Workflow } from './workflows/kc-multi-agent-phase3.workflow';
 import { kcExtractionFullCircleWorkflow } from './workflows/kc-extraction-full-circle.workflow';
 
 // Import specialized agent creators for Phase 3
@@ -13,15 +12,14 @@ import { createAtomicityAgent } from './agents/atomicity-agent';
 import { createBloomAgent } from './agents/bloom-agent';
 
 // Create specialized agent instances for Phase 3 using Gemini model
-const masterConsolidator = createMasterConsolidatorAgent('gemini-1.5-pro');
-const anchorsAgent = createAnchorsAgent('gemini-1.5-pro');
-const assessmentAgent = createAssessmentAgent('gemini-1.5-pro');
-const atomicityAgent = createAtomicityAgent('gemini-1.5-pro');
-const bloomAgent = createBloomAgent('gemini-1.5-pro');
+const masterConsolidator = createMasterConsolidatorAgent('gemini-2.0-flash');
+const anchorsAgent = createAnchorsAgent('gemini-2.5-pro');
+const assessmentAgent = createAssessmentAgent('gemini-2.5-pro');
+const atomicityAgent = createAtomicityAgent('gemini-2.5-pro');
+const bloomAgent = createBloomAgent('gemini-2.5-pro');
 
 export const mastra = new Mastra({
   workflows: { 
-    kcMultiAgentPhase3Workflow,
     kcExtractionFullCircleWorkflow,
   },
   agents: {

@@ -67,7 +67,7 @@ SPECIALIZATION: Focus on ATOMICITY - single concepts only, no compound ideas.
 COURSE CONTENT:
 ${combinedContent}
 
-Extract all atomic Knowledge Components that meet the criteria. Each KC must be:
+Extract all atomic Knowledge Components that meet the criteria (Maximum 35 KCs). Each KC must be:
 - A single, testable concept (not compound)
 - Unique (no duplicates or synonyms)
 - Action-oriented with clear verbs

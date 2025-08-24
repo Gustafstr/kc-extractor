@@ -103,7 +103,7 @@ BLOOM LEVEL REFERENCE:
 COURSE CONTENT:
 ${combinedContent}
 
-Extract all Knowledge Components with precise Bloom classification. Each KC must:
+Extract all Knowledge Components with precise Bloom classification (Maximum 35 KCs). Each KC must:
 - Use action verbs that align with the assigned Bloom level
 - Have cognitive complexity appropriate for the course
 - Show accurate verb-taxonomy mapping
